@@ -3,7 +3,7 @@ import fs from "fs/promises";
 import path from "path";
 dotenv.config();
 
-import { validateEnv, type Env } from "./env";
+import { validateCliEnv, type CliEnv } from "./env";
 import InstagramAuth from "./auth";
 import InstagramScraper from "./scraper";
 
@@ -16,10 +16,10 @@ interface ScrapeOptions {
 class InstagramSavedPostsCLI {
   private auth: InstagramAuth | null = null;
   private scraper: InstagramScraper | null = null;
-  public env: Env;
+  public env: CliEnv;
 
   constructor() {
-    this.env = validateEnv();
+    this.env = validateCliEnv();
   }
 
   async initialize(): Promise<void> {

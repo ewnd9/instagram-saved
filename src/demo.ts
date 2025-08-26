@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { validateEnv, type Env } from "./env";
+import { validateCoreEnv } from "./env";
 import * as Schema from "./schema";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
@@ -13,7 +13,7 @@ main().catch((err) => {
 });
 
 async function main() {
-  const env = validateEnv();
+  const env = validateCoreEnv();
   const pool = new Pool({
     connectionString: env.DATABASE_URL,
   });

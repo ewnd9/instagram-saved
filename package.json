@@ -4,13 +4,19 @@
   "description": "Scrape Instagram saved posts and store them in PostgreSQL",
   "main": "dist/index.js",
   "packageManager": "yarn@4.3.1",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "build": "tsc",
-    "start": "npm run build && node dist/index.js",
-    "dev": "npm run build && node dist/index.js",
-    "cli:scrape": "npm run build && HEADLESS=false node dist/cli.js",
+    "build": "tsc && yarn workspace @instagram-scraper/cli build",
+    "build:core": "tsc",
+    "build:cli": "yarn workspace @instagram-scraper/cli build",
+    "start": "yarn build:core && node dist/index.js",
+    "dev": "yarn build:core && node dist/index.js",
+    "cli:scrape": "yarn build && HEADLESS=false yarn workspace @instagram-scraper/cli start",
     "watch": "tsc --watch",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist && yarn workspace @instagram-scraper/cli clean",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
   },

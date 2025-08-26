@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { validateEnv, type Env } from "./env";
+import { validateCoreEnv, type CoreEnv } from "./env";
 import Database from "./database";
 
 interface ScrapeOptions {
@@ -20,10 +20,10 @@ interface DatabaseStats {
 
 class InstagramSavedPostsScraper {
   private database: Database | null = null;
-  public env: Env;
+  public env: CoreEnv;
 
   constructor() {
-    this.env = validateEnv();
+    this.env = validateCoreEnv();
   }
 
   async cleanup(): Promise<void> {
@@ -46,9 +46,6 @@ async function main(): Promise<void> {
 
   console.log("🎯 Configuration:");
   console.log(`   - Max scrolls: ${maxScrolls}`);
-  console.log(
-    `   - Headless mode: ${scraper.env.HEADLESS} ${process.env.HEADLESS}`
-  );
   console.log("");
 }
 

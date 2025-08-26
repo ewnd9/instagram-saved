@@ -1,20 +1,17 @@
 import { z } from 'zod';
 
-const envSchema = z.object({
-    DATABASE_URL: z.string().url('DATABASE_URL must be a valid URL'),
-    INSTAGRAM_USERNAME: z.string().min(1, 'INSTAGRAM_USERNAME is required'),
-    INSTAGRAM_PASSWORD: z.string().min(1, 'INSTAGRAM_PASSWORD is required'),
-    HEADLESS: z.string().default('true').transform((val) => val === 'true')
+const coreEnvSchema = z.object({
+    DATABASE_URL: z.string().url('DATABASE_URL must be a valid URL')
 });
 
-export type Env = z.infer<typeof envSchema>;
+export type CoreEnv = z.infer<typeof coreEnvSchema>;
 
-export function validateEnv(): Env {
-    console.log('🔍 Validating environment variables...');
-    const result = envSchema.safeParse(process.env);
+export function validateCoreEnv(): CoreEnv {
+    console.log('🔍 Validating core environment variables...');
+    const result = coreEnvSchema.safeParse(process.env);
     
     if (!result.success) {
-        console.error('❌ Environment validation failed:');
+        console.error('❌ Core environment validation failed:');
         result.error.issues.forEach((issue) => {
             console.error(`   - ${issue.path.join('.')}: ${issue.message}`);
         });

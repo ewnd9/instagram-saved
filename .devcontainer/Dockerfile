@@ -51,7 +51,7 @@ WORKDIR /workspace
 
 # Install global packages
 USER root
-RUN npm install -g typescript ts-node
+RUN npm install -g typescript ts-node @anthropics/claude-code
 
 # Switch back to node user
 USER node

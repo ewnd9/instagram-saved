@@ -41,5 +41,10 @@
   "forwardPorts": [5432],
   "postCreateCommand": "yarn install",
   
+  "mounts": [
+    "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.claude.json,target=/home/node/.claude.json,type=bind,consistency=cached"
+  ],
+  
   "remoteUser": "node"
 }

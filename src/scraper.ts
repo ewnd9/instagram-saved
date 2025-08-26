@@ -1,4 +1,4 @@
-import { Page } from "puppeteer";
+import { Page } from "@playwright/test";
 
 interface PostData {
   instagram_post_id: string;
@@ -96,7 +96,7 @@ class InstagramScraper {
     try {
       console.log(`Getting details for post: ${postUrl}`);
 
-      await this.page.goto(postUrl, { waitUntil: "networkidle2" });
+      await this.page.goto(postUrl, { waitUntil: "networkidle" });
       await this.page.waitForSelector("article", { timeout: 10000 });
 
       const postDetails = await this.page.evaluate((): PostDetails => {

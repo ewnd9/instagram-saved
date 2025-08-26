@@ -1,8 +1,8 @@
 {
   "name": "Instagram Scraper Dev",
-  "service": "app",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
   "workspaceFolder": "/workspace",
-  "shutdownAction": "stopCompose",
+  "build": { "dockerfile": "Dockerfile" },
   "customizations": {
     "vscode": {
       "extensions": [
@@ -14,8 +14,7 @@
         "ms-vscode-remote.remote-containers",
         "formulahendry.auto-rename-tag",
         "christian-kohler.path-intellisense",
-        "ms-playwright.playwright",
-        "ms-vscode.vscode-node-azure-pack"
+        "ms-playwright.playwright"
       ],
       "settings": {
         "typescript.preferences.importModuleSpecifier": "relative",

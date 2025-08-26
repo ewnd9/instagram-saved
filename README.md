@@ -1,6 +1,6 @@
 # Instagram Saved Posts Scraper
 
-A TypeScript application that scrapes Instagram saved posts and stores them in PostgreSQL using Puppeteer.
+A TypeScript application that scrapes Instagram saved posts and stores them in PostgreSQL using Playwright.
 
 ## Getting Started
 

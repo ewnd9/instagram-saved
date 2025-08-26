@@ -1,4 +1,4 @@
-import puppeteer, { Browser, Page } from "puppeteer";
+import { chromium, Browser, Page } from "@playwright/test";
 
 class InstagramAuth {
   private username: string;
@@ -14,7 +14,7 @@ class InstagramAuth {
   }
 
   async initBrowser(): Promise<void> {
-    this.browser = await puppeteer.launch({
+    this.browser = await chromium.launch({
       headless: this.headless,
       args: [
         "--no-sandbox",
@@ -22,15 +22,13 @@ class InstagramAuth {
         "--disable-dev-shm-usage",
         "--disable-accelerated-2d-canvas",
         "--disable-gpu",
-        "--window-size=1920x1080",
       ],
     });
 
-    this.page = await this.browser.newPage();
-    await this.page.setViewport({ width: 1920, height: 1080 });
-    await this.page.setUserAgent(
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    );
+    this.page = await this.browser.newPage({
+      userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    });
+    await this.page.setViewportSize({ width: 1920, height: 1080 });
   }
 
   async login(): Promise<boolean> {
@@ -41,7 +39,7 @@ class InstagramAuth {
     try {
       console.log("Navigating to Instagram login page...");
       await this.page.goto("https://www.instagram.com/accounts/login/", {
-        waitUntil: "networkidle2",
+        waitUntil: "networkidle",
       });
 
       await this.page.waitForSelector('input[name="username"]', {
@@ -49,9 +47,11 @@ class InstagramAuth {
       });
 
       console.log("Entering credentials...");
+      await this.page.fill('input[name="username"]', this.username);
       await this.page.type('input[name="username"]', this.username, {
         delay: 100,
       });
+      await this.page.fill('input[name="password"]', this.password);
       await this.page.type('input[name="password"]', this.password, {
         delay: 100,
       });
@@ -59,8 +59,7 @@ class InstagramAuth {
       await this.page.click('button[type="submit"]');
 
       console.log("Waiting for login to complete...");
-      await this.page.waitForNavigation({
-        waitUntil: "networkidle2",
+      await this.page.waitForURL(/^(?!.*\/accounts\/login\/).*$/, {
         timeout: 15000,
       });
 
@@ -77,7 +76,7 @@ class InstagramAuth {
 
       if (currentUrl.includes("/accounts/onetap/")) {
         await this.page.click('button[type="button"]');
-        await this.page.waitForNavigation({ waitUntil: "networkidle2" });
+        await this.page.waitForURL(/^(?!.*\/accounts\/onetap\/).*$/);
       }
 
       console.log("Successfully logged in to Instagram");
@@ -100,7 +99,7 @@ class InstagramAuth {
       await this.page.goto(
         `https://www.instagram.com/${this.username}/saved/`,
         {
-          waitUntil: "networkidle2",
+          waitUntil: "networkidle",
         }
       );
 

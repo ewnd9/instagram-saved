@@ -1,6 +1,6 @@
 FROM node:22-bookworm
 
-# Install system dependencies for Puppeteer
+# Install system dependencies for Playwright
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -40,7 +40,8 @@ RUN apt-get update && \
     apt install -y postgresql-common postgresql-client-15 && \
     rm -rf /var/lib/apt/lists/* && \
     npm install -g @anthropic-ai/claude-code && \
-    corepack enable yarn
+    corepack enable yarn && \
+    bash -c "echo 'alias cla=\"claude --dangerously-skip-permissions\"' >> /home/node/.bashrc"
 USER node
 WORKDIR /workspace
 

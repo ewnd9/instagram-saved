@@ -11,6 +11,13 @@ interface PostData {
   post_date?: string | null;
 }
 
+interface SavedCollection {
+  user: string;
+  name: string;
+  id: string;
+  url: string;
+}
+
 interface PostDetails {
   username: string | null;
   caption: string | null;
@@ -45,163 +52,60 @@ class InstagramScraper {
     });
   }
 
-  async extractSavedPosts(): Promise<PostData[]> {
+  async extractSavedPosts(): Promise<SavedCollection[]> {
     try {
-      console.log("Extracting saved posts data...");
+      console.log("Extracting saved post collections...");
 
-      const posts = await this.page.evaluate((): PostData[] => {
-        const postElements = document.querySelectorAll(
-          'article a[href*="/p/"]'
+      const collections = await this.page.evaluate((): SavedCollection[] => {
+        const collectionElements = document.querySelectorAll(
+          'a[href*="/saved/"]'
         );
-        const extractedPosts: PostData[] = [];
+        const extractedCollections: SavedCollection[] = [];
 
-        postElements.forEach((link) => {
+        collectionElements.forEach((link) => {
           try {
             const anchorElement = link as HTMLAnchorElement;
-            const postUrl = anchorElement.href;
-            const postIdMatch = postUrl.match(/\/p\/([^\/]+)/);
-            const postId = postIdMatch?.[1];
-
-            if (postId) {
-              const imgElement = anchorElement.querySelector(
-                "img"
-              ) as HTMLImageElement;
-              const imageUrl = imgElement ? imgElement.src : null;
-
-              extractedPosts.push({
-                instagram_post_id: postId,
-                post_url: postUrl,
-                image_url: imageUrl,
+            const collectionUrl = anchorElement.href;
+            const collectionMatch = collectionUrl.match(/\/([^\/]+)\/saved\/([^\/]+)\/([^\/]+)/);
+            
+            if (collectionMatch) {
+              const [, user, name, id] = collectionMatch;
+              
+              extractedCollections.push({
+                user,
+                name,
+                id,
+                url: collectionUrl,
               });
             }
           } catch (error) {
-            console.error("Error extracting post:", error);
+            console.error("Error extracting collection:", error);
           }
         });
 
-        return extractedPosts;
+        return extractedCollections;
       });
 
-      console.log(`Extracted ${posts.length} saved posts`);
-      return posts;
+      console.log(`Extracted ${collections.length} saved post collections`);
+      return collections;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
-      console.error("Failed to extract saved posts:", errorMessage);
+      console.error("Failed to extract saved post collections:", errorMessage);
       throw error;
     }
   }
 
-  async getPostDetails(postUrl: string): Promise<PostDetails> {
-    try {
-      console.log(`Getting details for post: ${postUrl}`);
-
-      await this.page.goto(postUrl, { waitUntil: "networkidle" });
-      await this.page.waitForSelector("article", { timeout: 10000 });
-
-      const postDetails = await this.page.evaluate((): PostDetails => {
-        try {
-          const usernameElement = document.querySelector(
-            'article header a[role="link"]'
-          ) as HTMLElement;
-          const username = usernameElement
-            ? usernameElement.textContent?.trim() || null
-            : null;
-
-          const captionElement = document.querySelector(
-            'article div[data-testid="post-caption"] span, article div:has(> span) span:first-child'
-          ) as HTMLElement;
-          const caption = captionElement
-            ? captionElement.textContent?.trim() || null
-            : null;
-
-          const likesElement = document.querySelector(
-            "section button span[title]"
-          ) as HTMLElement;
-          const likesText = likesElement
-            ? likesElement.getAttribute("title") ||
-              likesElement.textContent ||
-              "0"
-            : "0";
-          const likesCount = parseInt(likesText.replace(/[^\d]/g, "")) || 0;
-
-          const timeElement = document.querySelector(
-            "article time"
-          ) as HTMLTimeElement;
-          const postDate = timeElement
-            ? timeElement.getAttribute("datetime")
-            : null;
-
-          const commentsElements = document.querySelectorAll(
-            'article ul[role="list"] li[role="menuitem"]'
-          );
-          const commentsCount = commentsElements.length;
-
-          return {
-            username,
-            caption,
-            likes_count: likesCount,
-            comments_count: commentsCount,
-            post_date: postDate ? new Date(postDate).toISOString() : null,
-          };
-        } catch (error) {
-          console.error("Error extracting post details:", error);
-          return {
-            username: null,
-            caption: null,
-            likes_count: 0,
-            comments_count: 0,
-            post_date: null,
-          };
-        }
-      });
-
-      return postDetails;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      console.error(`Failed to get post details for ${postUrl}:`, errorMessage);
-      return {
-        username: null,
-        caption: null,
-        likes_count: 0,
-        comments_count: 0,
-        post_date: null,
-      };
-    }
-  }
-
-  async scrapeAllSavedPosts(
-    getDetailsForEach: boolean = false,
-    maxScrolls: number = 10
-  ): Promise<PostData[]> {
+  async scrapeAllSavedPosts(maxScrolls: number = 10): Promise<SavedCollection[]> {
     try {
       await this.scrollToLoadPosts(maxScrolls);
-      const posts = await this.extractSavedPosts();
+      const collections = await this.extractSavedPosts();
 
-      if (getDetailsForEach) {
-        console.log("Getting detailed information for each post...");
-
-        for (let i = 0; i < posts.length; i++) {
-          const post = posts[i];
-          console.log(
-            `Processing post ${i + 1}/${posts.length}: ${
-              post.instagram_post_id
-            }`
-          );
-
-          const details = await this.getPostDetails(post.post_url);
-          Object.assign(post, details);
-
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
-      }
-
-      return posts;
+      return collections;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
-      console.error("Failed to scrape saved posts:", errorMessage);
+      console.error("Failed to scrape saved post collections:", errorMessage);
       throw error;
     }
   }

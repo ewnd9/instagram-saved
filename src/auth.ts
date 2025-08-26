@@ -48,7 +48,7 @@ class InstagramAuth {
     try {
       console.log("Checking if already logged in...");
       await this.page.goto("https://www.instagram.com/", {
-        waitUntil: "networkidle",
+        waitUntil: "domcontentloaded",
       });
 
       // Check if already logged in by looking for user-specific elements
@@ -115,11 +115,11 @@ class InstagramAuth {
       await this.page.goto(
         `https://www.instagram.com/${this.username}/saved/`,
         {
-          waitUntil: "networkidle",
+          waitUntil: "domcontentloaded",
         }
       );
 
-      await this.page.waitForSelector("article", { timeout: 10000 });
+      await this.page.waitForSelector('[aria-label="Saved collections"]', { timeout: 10000 });
       console.log("Successfully navigated to saved posts");
       return true;
     } catch (error) {

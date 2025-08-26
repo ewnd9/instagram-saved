@@ -38,7 +38,7 @@ class InstagramSavedPostsCLI {
   }
 
   async scrapeToFile(options: ScrapeOptions = {}): Promise<void> {
-    const { getDetails = false, maxScrolls = 10, outputFile = "saved.json" } = options;
+    const { maxScrolls = 10, outputFile = "saved.json" } = options;
 
     try {
       console.log("🔐 Logging in to Instagram...");
@@ -48,10 +48,7 @@ class InstagramSavedPostsCLI {
       await this.auth!.navigateToSavedPosts();
 
       console.log("🔍 Scraping saved posts...");
-      const posts = await this.scraper!.scrapeAllSavedPosts(
-        getDetails,
-        maxScrolls
-      );
+      const posts = await this.scraper!.scrapeAllSavedPosts(maxScrolls);
 
       if (posts.length === 0) {
         console.log("⚠️ No saved posts found");
@@ -59,7 +56,7 @@ class InstagramSavedPostsCLI {
       }
 
       console.log(`💾 Saving ${posts.length} posts to ${outputFile}...`);
-      
+
       const outputPath = path.resolve(outputFile);
       await fs.writeFile(outputPath, JSON.stringify(posts, null, 2));
 
@@ -113,9 +110,7 @@ async function main(): Promise<void> {
   console.log(`   - Get post details: ${getDetails ? "Yes" : "No"}`);
   console.log(`   - Max scrolls: ${maxScrolls}`);
   console.log(`   - Output file: ${outputFile}`);
-  console.log(
-    `   - Headless mode: ${cli.env.HEADLESS}`
-  );
+  console.log(`   - Headless mode: ${cli.env.HEADLESS}`);
   console.log("");
 
   await cli.run({

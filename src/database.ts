@@ -1,6 +1,7 @@
-import { Pool, PoolClient } from 'pg';
-import * as fs from 'fs';
-import * as path from 'path';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+import { eq, sql, count, desc } from 'drizzle-orm';
+import { savedPosts, type SavedPost, type NewSavedPost } from './schema';
 
 interface DatabaseConfig {
     host: string;
@@ -37,6 +38,7 @@ interface DatabaseStats {
 
 class Database {
     private pool: Pool;
+    private db: ReturnType<typeof drizzle>;
 
     constructor(config: DatabaseConfig) {
         this.pool = new Pool({
@@ -46,6 +48,7 @@ class Database {
             user: config.user,
             password: config.password
         });
+        this.db = drizzle(this.pool);
     }
 
     async connect(): Promise<boolean> {
@@ -62,62 +65,83 @@ class Database {
     }
 
     async createTables(): Promise<void> {
-        const client = await this.pool.connect();
         try {
-            const schemaPath = path.join(__dirname, '..', 'schema.sql');
-            const schema = fs.readFileSync(schemaPath, 'utf8');
-            
-            await client.query(schema);
+            await this.db.execute(sql`
+                CREATE TABLE IF NOT EXISTS saved_posts (
+                    id SERIAL PRIMARY KEY,
+                    instagram_post_id VARCHAR(255) UNIQUE NOT NULL,
+                    username VARCHAR(255),
+                    caption TEXT,
+                    image_url TEXT,
+                    post_url TEXT NOT NULL,
+                    likes_count INTEGER DEFAULT 0,
+                    comments_count INTEGER DEFAULT 0,
+                    post_date TIMESTAMP,
+                    saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                
+                CREATE INDEX IF NOT EXISTS idx_saved_posts_username ON saved_posts(username);
+                CREATE INDEX IF NOT EXISTS idx_saved_posts_saved_at ON saved_posts(saved_at);
+                CREATE INDEX IF NOT EXISTS idx_saved_posts_post_date ON saved_posts(post_date);
+                
+                CREATE OR REPLACE FUNCTION update_updated_at_column()
+                RETURNS TRIGGER AS $$
+                BEGIN
+                    NEW.updated_at = CURRENT_TIMESTAMP;
+                    RETURN NEW;
+                END;
+                $$ language 'plpgsql';
+                
+                DROP TRIGGER IF EXISTS update_saved_posts_updated_at ON saved_posts;
+                CREATE TRIGGER update_saved_posts_updated_at BEFORE UPDATE
+                ON saved_posts FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+            `);
             console.log('Database tables created/verified successfully');
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             console.error('Failed to create tables:', errorMessage);
             throw error;
-        } finally {
-            client.release();
         }
     }
 
     async insertPost(post: Post): Promise<PostResult> {
-        const client = await this.pool.connect();
         try {
-            const query = `
-                INSERT INTO saved_posts (
-                    instagram_post_id, username, caption, image_url, 
-                    post_url, likes_count, comments_count, post_date
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                ON CONFLICT (instagram_post_id) 
-                DO UPDATE SET
-                    username = EXCLUDED.username,
-                    caption = EXCLUDED.caption,
-                    image_url = EXCLUDED.image_url,
-                    post_url = EXCLUDED.post_url,
-                    likes_count = EXCLUDED.likes_count,
-                    comments_count = EXCLUDED.comments_count,
-                    post_date = EXCLUDED.post_date,
-                    updated_at = CURRENT_TIMESTAMP
-                RETURNING id, instagram_post_id
-            `;
+            const newPost: NewSavedPost = {
+                instagramPostId: post.instagram_post_id,
+                username: post.username || null,
+                caption: post.caption || null,
+                imageUrl: post.image_url || null,
+                postUrl: post.post_url,
+                likesCount: post.likes_count || 0,
+                commentsCount: post.comments_count || 0,
+                postDate: post.post_date ? new Date(post.post_date) : null
+            };
 
-            const values = [
-                post.instagram_post_id,
-                post.username || null,
-                post.caption || null,
-                post.image_url || null,
-                post.post_url,
-                post.likes_count || 0,
-                post.comments_count || 0,
-                post.post_date ? new Date(post.post_date) : null
-            ];
+            const result = await this.db
+                .insert(savedPosts)
+                .values(newPost)
+                .onConflictDoUpdate({
+                    target: savedPosts.instagramPostId,
+                    set: {
+                        username: sql`excluded.username`,
+                        caption: sql`excluded.caption`,
+                        imageUrl: sql`excluded.image_url`,
+                        postUrl: sql`excluded.post_url`,
+                        likesCount: sql`excluded.likes_count`,
+                        commentsCount: sql`excluded.comments_count`,
+                        postDate: sql`excluded.post_date`,
+                        updatedAt: sql`CURRENT_TIMESTAMP`
+                    }
+                })
+                .returning({ id: savedPosts.id, instagramPostId: savedPosts.instagramPostId });
 
-            const result = await client.query(query, values);
-            return result.rows[0];
+            return { id: result[0].id, instagram_post_id: result[0].instagramPostId };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             console.error(`Failed to insert post ${post.instagram_post_id}:`, errorMessage);
             throw error;
-        } finally {
-            client.release();
         }
     }
 
@@ -140,67 +164,61 @@ class Database {
         return results;
     }
 
-    async getAllSavedPosts(): Promise<any[]> {
-        const client = await this.pool.connect();
+    async getAllSavedPosts(): Promise<SavedPost[]> {
         try {
-            const query = `
-                SELECT * FROM saved_posts 
-                ORDER BY saved_at DESC
-            `;
-            const result = await client.query(query);
-            return result.rows;
+            return await this.db
+                .select()
+                .from(savedPosts)
+                .orderBy(desc(savedPosts.savedAt));
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             console.error('Failed to fetch saved posts:', errorMessage);
             throw error;
-        } finally {
-            client.release();
         }
     }
 
-    async getPostsByUsername(username: string): Promise<any[]> {
-        const client = await this.pool.connect();
+    async getPostsByUsername(username: string): Promise<SavedPost[]> {
         try {
-            const query = `
-                SELECT * FROM saved_posts 
-                WHERE username = $1
-                ORDER BY saved_at DESC
-            `;
-            const result = await client.query(query, [username]);
-            return result.rows;
+            return await this.db
+                .select()
+                .from(savedPosts)
+                .where(eq(savedPosts.username, username))
+                .orderBy(desc(savedPosts.savedAt));
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             console.error(`Failed to fetch posts by username ${username}:`, errorMessage);
             throw error;
-        } finally {
-            client.release();
         }
     }
 
     async getStats(): Promise<DatabaseStats> {
-        const client = await this.pool.connect();
         try {
-            const queries = [
-                'SELECT COUNT(*) as total_posts FROM saved_posts',
-                'SELECT COUNT(DISTINCT username) as unique_users FROM saved_posts',
-                'SELECT username, COUNT(*) as post_count FROM saved_posts GROUP BY username ORDER BY post_count DESC LIMIT 10'
-            ];
-
-            const [totalResult, usersResult, topUsersResult] = await Promise.all(
-                queries.map(query => client.query(query))
-            );
+            const [totalResult, usersResult, topUsersResult] = await Promise.all([
+                this.db.select({ count: count() }).from(savedPosts),
+                this.db.select({ count: count(sql`DISTINCT ${savedPosts.username}`) }).from(savedPosts),
+                this.db
+                    .select({
+                        username: savedPosts.username,
+                        post_count: count(savedPosts.id)
+                    })
+                    .from(savedPosts)
+                    .groupBy(savedPosts.username)
+                    .orderBy(desc(count(savedPosts.id)))
+                    .limit(10)
+            ]);
 
             return {
-                total_posts: parseInt(totalResult.rows[0].total_posts),
-                unique_users: parseInt(usersResult.rows[0].unique_users),
-                top_users: topUsersResult.rows
+                total_posts: totalResult[0].count,
+                unique_users: usersResult[0].count,
+                top_users: topUsersResult.map(row => ({
+                    username: row.username || '',
+                    post_count: row.post_count.toString()
+                }))
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             console.error('Failed to fetch stats:', errorMessage);
             throw error;
-        } finally {
-            client.release();
         }
     }
 

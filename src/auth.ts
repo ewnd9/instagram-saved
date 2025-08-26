@@ -1,9 +1,12 @@
 import { chromium, Browser, Page } from "@playwright/test";
+import path from "path";
+import fs from "fs";
 
 class InstagramAuth {
   private username: string;
   private password: string;
   private headless: boolean;
+  private sessionDir: string;
   public browser: Browser | null = null;
   public page: Page | null = null;
 
@@ -11,10 +14,16 @@ class InstagramAuth {
     this.username = username;
     this.password = password;
     this.headless = headless;
+    this.sessionDir = path.resolve("browser-session");
   }
 
   async initBrowser(): Promise<void> {
-    this.browser = await chromium.launch({
+    // Ensure session directory exists
+    if (!fs.existsSync(this.sessionDir)) {
+      fs.mkdirSync(this.sessionDir, { recursive: true });
+    }
+
+    const context = await chromium.launchPersistentContext(this.sessionDir, {
       headless: this.headless,
       args: [
         "--no-sandbox",
@@ -23,12 +32,12 @@ class InstagramAuth {
         "--disable-accelerated-2d-canvas",
         "--disable-gpu",
       ],
+      userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      viewport: { width: 1920, height: 1080 }
     });
 
-    this.page = await this.browser.newPage({
-      userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    });
-    await this.page.setViewportSize({ width: 1920, height: 1080 });
+    this.browser = context as any; // Type compatibility
+    this.page = context.pages()[0] || await context.newPage();
   }
 
   async login(): Promise<boolean> {
@@ -37,7 +46,21 @@ class InstagramAuth {
     }
 
     try {
-      console.log("Navigating to Instagram login page...");
+      console.log("Checking if already logged in...");
+      await this.page.goto("https://www.instagram.com/", {
+        waitUntil: "networkidle",
+      });
+
+      // Check if already logged in by looking for user-specific elements
+      const isLoggedIn = await this.page.locator('[data-testid="search-input"]').count() > 0 ||
+                        await this.page.locator('a[href="/direct/inbox/"]').count() > 0;
+
+      if (isLoggedIn) {
+        console.log("Already logged in from previous session");
+        return true;
+      }
+
+      console.log("Not logged in, proceeding with login...");
       await this.page.goto("https://www.instagram.com/accounts/login/", {
         waitUntil: "networkidle",
       });
@@ -48,14 +71,7 @@ class InstagramAuth {
 
       console.log("Entering credentials...");
       await this.page.fill('input[name="username"]', this.username);
-      await this.page.type('input[name="username"]', this.username, {
-        delay: 100,
-      });
       await this.page.fill('input[name="password"]', this.password);
-      await this.page.type('input[name="password"]', this.password, {
-        delay: 100,
-      });
-
       await this.page.click('button[type="submit"]');
 
       console.log("Waiting for login to complete...");
@@ -116,6 +132,7 @@ class InstagramAuth {
 
   async closeBrowser(): Promise<void> {
     if (this.browser) {
+      console.log("Closing browser (session will be preserved)...");
       await this.browser.close();
     }
   }

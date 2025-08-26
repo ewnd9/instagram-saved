@@ -19,3 +19,6 @@ dist
 
 # CLI output
 saved.json
+
+# Browser session data
+browser-session/

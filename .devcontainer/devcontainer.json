@@ -35,9 +35,12 @@
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
+  "containerEnv": {
+    "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"
+  },
   "forwardPorts": [],
   // without "sudo": "Internal Error: EACCES: permission denied, symlink '../lib/node_modules/corepack/dist/pnpm.js' -> '/usr/local/bin/pnpm'"
-  "postCreateCommand": "corepack enable yarn && corepack install && yarn install",
+  "postCreateCommand": "yarn install",
   "mounts": [
     "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind,consistency=cached",
     "source=${localEnv:HOME}/.claude.json,target=/home/node/.claude.json,type=bind,consistency=cached"

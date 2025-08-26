@@ -3,14 +3,6 @@ import { Pool } from 'pg';
 import { eq, sql, count, desc } from 'drizzle-orm';
 import { savedPosts, type SavedPost, type NewSavedPost } from './schema';
 
-interface DatabaseConfig {
-    host: string;
-    port: number;
-    database: string;
-    user: string;
-    password: string;
-}
-
 interface Post {
     instagram_post_id: string;
     username?: string | null;
@@ -40,13 +32,9 @@ class Database {
     private pool: Pool;
     private db: ReturnType<typeof drizzle>;
 
-    constructor(config: DatabaseConfig) {
+    constructor(databaseUrl: string) {
         this.pool = new Pool({
-            host: config.host,
-            port: config.port,
-            database: config.database,
-            user: config.user,
-            password: config.password
+            connectionString: databaseUrl
         });
         this.db = drizzle(this.pool);
     }

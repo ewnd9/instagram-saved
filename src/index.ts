@@ -5,13 +5,6 @@ import InstagramAuth from './auth';
 import InstagramScraper from './scraper';
 import Database from './database';
 
-interface DatabaseConfig {
-    host: string;
-    port: number;
-    database: string;
-    user: string;
-    password: string;
-}
 
 interface ScrapeOptions {
     getDetails?: boolean;
@@ -35,15 +28,7 @@ class InstagramSavedPostsScraper {
     async initialize(): Promise<void> {
         console.log('🚀 Initializing Instagram Saved Posts Scraper...');
         
-        const dbConfig: DatabaseConfig = {
-            host: process.env.DB_HOST!,
-            port: parseInt(process.env.DB_PORT!),
-            database: process.env.DB_NAME!,
-            user: process.env.DB_USER!,
-            password: process.env.DB_PASSWORD!
-        };
-
-        this.database = new Database(dbConfig);
+        this.database = new Database(process.env.DATABASE_URL!);
         await this.database.connect();
         await this.database.createTables();
 
@@ -130,7 +115,7 @@ class InstagramSavedPostsScraper {
 
 async function main(): Promise<void> {
     const requiredEnvVars = [
-        'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD',
+        'DATABASE_URL',
         'INSTAGRAM_USERNAME', 'INSTAGRAM_PASSWORD'
     ];
 

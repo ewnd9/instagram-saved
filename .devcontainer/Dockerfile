@@ -37,7 +37,7 @@ RUN apt-get update && apt-get install -y \
 
 # running as root, otherwise: npm error Error: EACCES: permission denied, mkdir '/usr/local/lib/node_modules/@anthropic-ai'
 RUN apt-get update && \
-    apt install -y postgresql-common && \
+    apt install -y postgresql-common postgresql-client-15 && \
     rm -rf /var/lib/apt/lists/* && \
     npm install -g @anthropic-ai/claude-code && \
     corepack enable yarn

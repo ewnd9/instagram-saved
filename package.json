@@ -11,7 +11,9 @@
     "scrape": "npm run build && node dist/index.js",
     "scrape:details": "npm run build && node dist/index.js --details",
     "watch": "tsc --watch",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "keywords": [
     "instagram",
@@ -27,7 +29,8 @@
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.5",
     "pg": "^8.16.3",
-    "puppeteer": "^24.17.0"
+    "puppeteer": "^24.17.0",
+    "zod": "^4.1.3"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

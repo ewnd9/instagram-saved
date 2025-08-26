@@ -1,0 +1,3 @@
+- use yarn
+- use typescript
+- write tests

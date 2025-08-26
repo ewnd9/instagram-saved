@@ -5,6 +5,8 @@ import Ajv from "ajv";
 import addFormats from "ajv-formats";
 import { db } from "~/server/db";
 import { collections, posts } from "~/server/db/schema";
+import { addJob, JOB_TYPES } from "~/server/queue/jobs";
+import type { ParseInstagramPostPayload } from "~/server/queue/jobs";
 
 const ajv = new Ajv();
 addFormats(ajv);
@@ -15,6 +17,7 @@ type ApiResponse = {
   data?: {
     collectionsProcessed: number;
     postsProcessed: number;
+    jobsQueued: number;
   };
   error?: string;
 };
@@ -65,6 +68,7 @@ export default async function handler(
 
     let collectionsProcessed = 0;
     let postsProcessed = 0;
+    let jobsQueued = 0;
     const errors: string[] = [];
 
     // Process each collection
@@ -111,6 +115,21 @@ export default async function handler(
               });
 
             postsProcessed++;
+
+            // Queue Instagram post parsing job
+            try {
+              const jobPayload: ParseInstagramPostPayload = {
+                url: post.url,
+                collectionId: collection.id,
+                postId: post.id,
+              };
+
+              await addJob(JOB_TYPES.PARSE_INSTAGRAM_POST, jobPayload);
+
+              jobsQueued++;
+            } catch (jobError) {
+              errors.push(`Failed to queue parsing job for post ${post.id}: ${jobError}`);
+            }
           } catch (postError) {
             errors.push(`Failed to process post ${post.id}: ${postError}`);
           }
@@ -125,10 +144,11 @@ export default async function handler(
     // Return success response with processing details
     const response: ApiResponse = {
       success: true,
-      message: `Successfully processed ${collectionsProcessed} collections and ${postsProcessed} posts`,
+      message: `Successfully processed ${collectionsProcessed} collections, ${postsProcessed} posts, and queued ${jobsQueued} parsing jobs`,
       data: {
         collectionsProcessed,
         postsProcessed,
+        jobsQueued,
       },
     };
 

@@ -6,11 +6,18 @@ dotenv.config();
 import { validateCliEnv, type CliEnv } from "./env";
 import InstagramAuth from "./auth";
 import InstagramScraper from "./scraper";
+import SavedDataUploader from "./uploader";
 
 interface ScrapeOptions {
   getDetails?: boolean;
   maxScrolls?: number;
   outputFile?: string;
+}
+
+interface UploadOptions {
+  filePath?: string;
+  webUrl?: string;
+  timeout?: number;
 }
 
 class InstagramSavedPostsCLI {
@@ -81,6 +88,38 @@ class InstagramSavedPostsCLI {
     console.log("✅ Cleanup complete");
   }
 
+  async uploadSavedData(options: UploadOptions = {}): Promise<void> {
+    const { filePath = "saved.json", webUrl = this.env.WEB_API, timeout = 30000 } = options;
+
+    try {
+      console.log("📤 Upload Mode - Sending saved data to web API");
+      
+      const uploader = new SavedDataUploader(webUrl, timeout);
+      
+      // Test connection first
+      const connected = await uploader.testConnection();
+      if (!connected) {
+        console.warn("⚠️ Connection test failed, but proceeding anyway...");
+      }
+
+      const result = await uploader.uploadSavedData({ filePath, timeout });
+      
+      if (!result.success) {
+        console.error("💥 Upload failed:", result.message);
+        if (result.error) {
+          console.error("Error details:", result.error);
+        }
+        process.exit(1);
+      }
+      
+      console.log("🎉 Upload completed successfully!");
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("💥 Upload failed:", errorMessage);
+      process.exit(1);
+    }
+  }
+
   async run(options: ScrapeOptions = {}): Promise<void> {
     try {
       await this.initialize();
@@ -98,26 +137,50 @@ class InstagramSavedPostsCLI {
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
-  const getDetails = args.includes("--details") || args.includes("-d");
-  const scrollsArg = args.find((arg) => arg.startsWith("--scrolls="));
-  const maxScrolls = scrollsArg ? parseInt(scrollsArg.split("=")[1]) : 10;
-  const outputArg = args.find((arg) => arg.startsWith("--output="));
-  const outputFile = outputArg ? outputArg.split("=")[1] : "saved.json";
+  
+  // Check for upload command
+  const uploadMode = args.includes("upload") || args.includes("--upload");
+  
+  if (uploadMode) {
+    // Upload mode - send existing data to web API
+    const fileArg = args.find((arg) => arg.startsWith("--file="));
+    const filePath = fileArg ? fileArg.split("=")[1] : "saved.json";
+    const cli = new InstagramSavedPostsCLI();
+    const urlArg = args.find((arg) => arg.startsWith("--url="));
+    const webUrl = urlArg ? urlArg.split("=")[1] : cli.env.WEB_API;
+    const timeoutArg = args.find((arg) => arg.startsWith("--timeout="));
+    const timeout = timeoutArg ? parseInt(timeoutArg.split("=")[1]) : 30000;
 
-  const cli = new InstagramSavedPostsCLI();
+    console.log("🎯 Upload Configuration:");
+    console.log(`   - File: ${filePath}`);
+    console.log(`   - Web URL: ${webUrl}`);
+    console.log(`   - Timeout: ${timeout}ms`);
+    console.log("");
 
-  console.log("🎯 Configuration:");
-  console.log(`   - Get post details: ${getDetails ? "Yes" : "No"}`);
-  console.log(`   - Max scrolls: ${maxScrolls}`);
-  console.log(`   - Output file: ${outputFile}`);
-  console.log(`   - Headless mode: ${cli.env.HEADLESS}`);
-  console.log("");
+    await cli.uploadSavedData({ filePath, webUrl, timeout });
+  } else {
+    // Scrape mode (default behavior)
+    const getDetails = args.includes("--details") || args.includes("-d");
+    const scrollsArg = args.find((arg) => arg.startsWith("--scrolls="));
+    const maxScrolls = scrollsArg ? parseInt(scrollsArg.split("=")[1]) : 10;
+    const outputArg = args.find((arg) => arg.startsWith("--output="));
+    const outputFile = outputArg ? outputArg.split("=")[1] : "saved.json";
 
-  await cli.run({
-    getDetails,
-    maxScrolls,
-    outputFile,
-  });
+    const cli = new InstagramSavedPostsCLI();
+
+    console.log("🎯 Scrape Configuration:");
+    console.log(`   - Get post details: ${getDetails ? "Yes" : "No"}`);
+    console.log(`   - Max scrolls: ${maxScrolls}`);
+    console.log(`   - Output file: ${outputFile}`);
+    console.log(`   - Headless mode: ${cli.env.HEADLESS}`);
+    console.log("");
+
+    await cli.run({
+      getDetails,
+      maxScrolls,
+      outputFile,
+    });
+  }
 }
 
 if (require.main === module) {

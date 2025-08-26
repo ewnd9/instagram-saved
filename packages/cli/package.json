@@ -21,7 +21,9 @@
   "license": "MIT",
   "dependencies": {
     "@playwright/test": "1.55.0",
+    "@types/node-fetch": "2",
     "dotenv": "^17.2.1",
+    "node-fetch": "2",
     "zod": "^4.1.3"
   },
   "devDependencies": {

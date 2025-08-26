@@ -3,7 +3,8 @@ import { z } from 'zod';
 const cliEnvSchema = z.object({
     INSTAGRAM_USERNAME: z.string().min(1, 'INSTAGRAM_USERNAME is required'),
     INSTAGRAM_PASSWORD: z.string().min(1, 'INSTAGRAM_PASSWORD is required'),
-    HEADLESS: z.string().default('true').transform((val) => val === 'true')
+    HEADLESS: z.string().default('true').transform((val) => val === 'true'),
+    WEB_API: z.string().url().default('http://localhost:3000')
 });
 
 export type CliEnv = z.infer<typeof cliEnvSchema>;

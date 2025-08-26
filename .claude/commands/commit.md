@@ -18,7 +18,5 @@ Based on the above changes, create a single git commit.
 
 - First line: Short, concise, technical summary of the change (50 chars or less)
 - Leave a blank line after the first line
-- Add detailed bullet points explaining the work done (8-10 lines maximum)
-- Keep bullet points easy to understand and focused on technical changes
-- Do NOT include any attribution, co-authorship, or mentions of Claude/AI assistance
-- Focus on what was changed and why, not who created it
+- Add detailed bullet points explaining the work done only if they are really not obvious, don't spam
+- Always add "Co-Authored-By: Claude <noreply@anthropic.com>"

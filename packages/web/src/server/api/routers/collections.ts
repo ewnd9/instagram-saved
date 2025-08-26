@@ -94,6 +94,9 @@ export const collectionsRouter = createTRPCRouter({
       with: {
         posts: {
           orderBy: (posts, { desc }) => [desc(posts.createdAt)],
+          with: {
+            profile: true,
+          },
         },
       },
     });
@@ -109,6 +112,9 @@ export const collectionsRouter = createTRPCRouter({
         with: {
           posts: {
             orderBy: (posts, { desc }) => [desc(posts.createdAt)],
+            with: {
+              profile: true,
+            },
           },
         },
       });
@@ -125,6 +131,9 @@ export const collectionsRouter = createTRPCRouter({
         with: {
           posts: {
             orderBy: (posts, { desc }) => [desc(posts.createdAt)],
+            with: {
+              profile: true,
+            },
           },
         },
       });

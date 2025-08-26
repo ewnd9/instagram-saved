@@ -16,24 +16,21 @@ function extractPostIdFromUrl(url: string): string {
 export async function handleParseInstagramPost(jobs: Job[]): Promise<void> {
   for (const job of jobs) {
     console.log(`Parsing Instagram post job: ${job.id}`);
-    
+
     try {
-      const { url, collectionId, postId } = job.data as ParseInstagramPostPayload;
-      
-      console.log(`Parsing Instagram post: ${url} for collection ${collectionId}`);
-      
+      const { url, collectionId, postId } =
+        job.data as ParseInstagramPostPayload;
+
+      console.log(
+        `Parsing Instagram post: ${url} for collection ${collectionId}`
+      );
+
       // Extract the shortcode from the URL
       const shortcode = extractPostIdFromUrl(url);
-      
+
       // Parse the Instagram post using the new parser
       const instagramData = await parseInstagramPost({ postId: shortcode });
-      
-      console.log(`Extracted data for ${url}:`, {
-        username: instagramData.owner?.username,
-        hasDescription: !!instagramData.description,
-        hasVideo: !!instagramData.videoUrl,
-        hasImage: !!instagramData.displayUrl,
-      });
+      console.log(`Extracted data for ${url}:`, instagramData);
 
       // Create or update profile if we have profile data
       let profileDbId = null;
@@ -58,14 +55,12 @@ export async function handleParseInstagramPost(jobs: Job[]): Promise<void> {
           profileDbId = instagramData.owner.id;
         } else {
           // Create new profile
-          await db
-            .insert(profiles)
-            .values({
-              id: instagramData.owner.id,
-              username: instagramData.owner.username,
-              displayName: instagramData.owner.fullName,
-              profileUrl: `https://instagram.com/${instagramData.owner.username}`,
-            });
+          await db.insert(profiles).values({
+            id: instagramData.owner.id,
+            username: instagramData.owner.username,
+            displayName: instagramData.owner.fullName,
+            profileUrl: `https://instagram.com/${instagramData.owner.username}`,
+          });
           profileDbId = instagramData.owner.id;
         }
       }
@@ -74,7 +69,7 @@ export async function handleParseInstagramPost(jobs: Job[]): Promise<void> {
       if (postId) {
         await db
           .update(posts)
-          .set({ 
+          .set({
             profileId: profileDbId,
             shortcode,
             description: instagramData.description,
@@ -88,7 +83,6 @@ export async function handleParseInstagramPost(jobs: Job[]): Promise<void> {
       }
 
       console.log(`Successfully parsed and updated post ${url}`);
-      
     } catch (error) {
       console.error(`Failed to parse Instagram post job ${job.id}:`, error);
       throw error; // This will cause the job to retry

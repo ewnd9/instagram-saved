@@ -19,7 +19,6 @@ export async function addJob<T extends object>(
   options?: JobOptions
 ): Promise<string | null> {
   const boss = await getBoss();
-  
   const jobId = await boss.send(jobType, payload, {
     retryLimit: 3,
     retryDelay: 5000,
@@ -37,7 +36,7 @@ export async function scheduleRecurringJob(
   options?: JobOptions
 ): Promise<void> {
   const boss = await getBoss();
-  
+
   await boss.schedule(jobType, cron, payload, {
     retryLimit: 2,
     ...options,

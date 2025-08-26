@@ -1,4 +1,5 @@
 import Head from "next/head";
+import Link from "next/link";
 import { api } from "~/utils/api";
 import CollectionCard from "~/components/collection-card";
 
@@ -21,6 +22,14 @@ export default function Home() {
             <p className="mt-4 text-xl text-gray-300">
               Browse your saved Instagram posts organized by collection
             </p>
+            <div className="mt-6">
+              <Link
+                href="/jobs"
+                className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                View Jobs Dashboard
+              </Link>
+            </div>
           </div>
 
           {isLoading && (

@@ -14,6 +14,7 @@ export async function startWorkers(): Promise<void> {
   process.env.WORKERS_STARTED = "true";
 
   // Parse Instagram post worker
+  await boss.createQueue(JOB_TYPES.PARSE_INSTAGRAM_POST);
   await boss.work(JOB_TYPES.PARSE_INSTAGRAM_POST, handleParseInstagramPost);
 
   console.log("Instagram post parser worker started successfully");

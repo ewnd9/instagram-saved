@@ -1,15 +1,19 @@
-const puppeteer = require('puppeteer');
+import puppeteer, { Browser, Page } from 'puppeteer';
 
 class InstagramAuth {
-    constructor(username, password, headless = true) {
+    private username: string;
+    private password: string;
+    private headless: boolean;
+    public browser: Browser | null = null;
+    public page: Page | null = null;
+
+    constructor(username: string, password: string, headless: boolean = true) {
         this.username = username;
         this.password = password;
         this.headless = headless;
-        this.browser = null;
-        this.page = null;
     }
 
-    async initBrowser() {
+    async initBrowser(): Promise<void> {
         this.browser = await puppeteer.launch({
             headless: this.headless,
             args: [
@@ -27,7 +31,11 @@ class InstagramAuth {
         await this.page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
     }
 
-    async login() {
+    async login(): Promise<boolean> {
+        if (!this.page) {
+            throw new Error('Browser not initialized. Call initBrowser() first.');
+        }
+
         try {
             console.log('Navigating to Instagram login page...');
             await this.page.goto('https://www.instagram.com/accounts/login/', {
@@ -59,12 +67,17 @@ class InstagramAuth {
             console.log('Successfully logged in to Instagram');
             return true;
         } catch (error) {
-            console.error('Login failed:', error.message);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error('Login failed:', errorMessage);
             throw error;
         }
     }
 
-    async navigateToSavedPosts() {
+    async navigateToSavedPosts(): Promise<boolean> {
+        if (!this.page) {
+            throw new Error('Browser not initialized. Call initBrowser() first.');
+        }
+
         try {
             console.log('Navigating to saved posts...');
             await this.page.goto(`https://www.instagram.com/${this.username}/saved/`, {
@@ -75,16 +88,17 @@ class InstagramAuth {
             console.log('Successfully navigated to saved posts');
             return true;
         } catch (error) {
-            console.error('Failed to navigate to saved posts:', error.message);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error('Failed to navigate to saved posts:', errorMessage);
             throw error;
         }
     }
 
-    async closeBrowser() {
+    async closeBrowser(): Promise<void> {
         if (this.browser) {
             await this.browser.close();
         }
     }
 }
 
-module.exports = InstagramAuth;
+export default InstagramAuth;

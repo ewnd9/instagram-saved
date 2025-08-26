@@ -2,13 +2,16 @@
   "name": "instagram-saved-posts-scraper",
   "version": "1.0.0",
   "description": "Scrape Instagram saved posts and store them in PostgreSQL",
-  "main": "index.js",
+  "main": "dist/index.js",
   "packageManager": "yarn@4.3.1",
   "scripts": {
-    "start": "node index.js",
-    "scrape": "node index.js",
-    "scrape:details": "node index.js --details",
-    "dev": "HEADLESS=false node index.js"
+    "build": "tsc",
+    "start": "npm run build && node dist/index.js",
+    "dev": "npm run build && HEADLESS=false node dist/index.js",
+    "scrape": "npm run build && node dist/index.js",
+    "scrape:details": "npm run build && node dist/index.js --details",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist"
   },
   "keywords": [
     "instagram",
@@ -26,7 +29,8 @@
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
-    "@types/pg": "^8.15.5"
+    "@types/pg": "^8.15.5",
+    "typescript": "^5.9.2"
   },
   "engines": {
     "node": ">=14.0.0"

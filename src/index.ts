@@ -1,42 +1,65 @@
-require('dotenv').config();
-const InstagramAuth = require('./src/auth');
-const InstagramScraper = require('./src/scraper');
-const Database = require('./src/database');
+import dotenv from 'dotenv';
+dotenv.config();
+
+import InstagramAuth from './auth';
+import InstagramScraper from './scraper';
+import Database from './database';
+
+interface DatabaseConfig {
+    host: string;
+    port: number;
+    database: string;
+    user: string;
+    password: string;
+}
+
+interface ScrapeOptions {
+    getDetails?: boolean;
+    maxScrolls?: number;
+}
+
+interface DatabaseStats {
+    total_posts: number;
+    unique_users: number;
+    top_users: Array<{
+        username: string;
+        post_count: string;
+    }>;
+}
 
 class InstagramSavedPostsScraper {
-    constructor() {
-        this.auth = null;
-        this.scraper = null;
-        this.database = null;
-    }
+    private auth: InstagramAuth | null = null;
+    private scraper: InstagramScraper | null = null;
+    private database: Database | null = null;
 
-    async initialize() {
+    async initialize(): Promise<void> {
         console.log('🚀 Initializing Instagram Saved Posts Scraper...');
         
-        this.database = new Database({
-            host: process.env.DB_HOST,
-            port: process.env.DB_PORT,
-            database: process.env.DB_NAME,
-            user: process.env.DB_USER,
-            password: process.env.DB_PASSWORD
-        });
+        const dbConfig: DatabaseConfig = {
+            host: process.env.DB_HOST!,
+            port: parseInt(process.env.DB_PORT!),
+            database: process.env.DB_NAME!,
+            user: process.env.DB_USER!,
+            password: process.env.DB_PASSWORD!
+        };
 
+        this.database = new Database(dbConfig);
         await this.database.connect();
         await this.database.createTables();
 
         this.auth = new InstagramAuth(
-            process.env.INSTAGRAM_USERNAME,
-            process.env.INSTAGRAM_PASSWORD,
+            process.env.INSTAGRAM_USERNAME!,
+            process.env.INSTAGRAM_PASSWORD!,
             process.env.HEADLESS === 'true'
         );
 
         await this.auth.initBrowser();
-        this.scraper = new InstagramScraper(this.auth.page);
+        this.scraper = new InstagramScraper(this.auth.page!);
         
         console.log('✅ Initialization complete');
     }
 
-    async scrapeAndStore(options = {}) {
+    async scrapeAndStore(options: ScrapeOptions = {}): Promise<void> {
         const {
             getDetails = false,
             maxScrolls = 10
@@ -44,13 +67,13 @@ class InstagramSavedPostsScraper {
 
         try {
             console.log('🔐 Logging in to Instagram...');
-            await this.auth.login();
+            await this.auth!.login();
 
             console.log('📂 Navigating to saved posts...');
-            await this.auth.navigateToSavedPosts();
+            await this.auth!.navigateToSavedPosts();
 
             console.log('🔍 Scraping saved posts...');
-            const posts = await this.scraper.scrapeAllSavedPosts(getDetails, maxScrolls);
+            const posts = await this.scraper!.scrapeAllSavedPosts(getDetails, maxScrolls);
 
             if (posts.length === 0) {
                 console.log('⚠️ No saved posts found');
@@ -58,10 +81,10 @@ class InstagramSavedPostsScraper {
             }
 
             console.log('💾 Storing posts to database...');
-            const results = await this.database.insertBulkPosts(posts);
+            const results = await this.database!.insertBulkPosts(posts);
 
             console.log('📊 Getting database stats...');
-            const stats = await this.database.getStats();
+            const stats: DatabaseStats = await this.database!.getStats();
 
             console.log('\n✅ Scraping completed successfully!');
             console.log(`📈 Stats:`);
@@ -71,12 +94,13 @@ class InstagramSavedPostsScraper {
             console.log(`   - Unique users: ${stats.unique_users}`);
 
         } catch (error) {
-            console.error('❌ Scraping failed:', error.message);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error('❌ Scraping failed:', errorMessage);
             throw error;
         }
     }
 
-    async cleanup() {
+    async cleanup(): Promise<void> {
         console.log('🧹 Cleaning up...');
         
         if (this.auth) {
@@ -90,12 +114,13 @@ class InstagramSavedPostsScraper {
         console.log('✅ Cleanup complete');
     }
 
-    async run(options = {}) {
+    async run(options: ScrapeOptions = {}): Promise<void> {
         try {
             await this.initialize();
             await this.scrapeAndStore(options);
         } catch (error) {
-            console.error('💥 Application failed:', error.message);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error('💥 Application failed:', errorMessage);
             process.exit(1);
         } finally {
             await this.cleanup();
@@ -103,7 +128,7 @@ class InstagramSavedPostsScraper {
     }
 }
 
-async function main() {
+async function main(): Promise<void> {
     const requiredEnvVars = [
         'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD',
         'INSTAGRAM_USERNAME', 'INSTAGRAM_PASSWORD'
@@ -120,7 +145,8 @@ async function main() {
 
     const args = process.argv.slice(2);
     const getDetails = args.includes('--details') || args.includes('-d');
-    const maxScrolls = parseInt(args.find(arg => arg.startsWith('--scrolls='))?.split('=')[1]) || 10;
+    const scrollsArg = args.find(arg => arg.startsWith('--scrolls='));
+    const maxScrolls = scrollsArg ? parseInt(scrollsArg.split('=')[1]) : 10;
 
     console.log('🎯 Configuration:');
     console.log(`   - Get post details: ${getDetails ? 'Yes' : 'No'}`);
@@ -137,9 +163,10 @@ async function main() {
 
 if (require.main === module) {
     main().catch(error => {
-        console.error('💥 Unhandled error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('💥 Unhandled error:', errorMessage);
         process.exit(1);
     });
 }
 
-module.exports = InstagramSavedPostsScraper;
+export default InstagramSavedPostsScraper;

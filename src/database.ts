@@ -1,7 +1,44 @@
-const { Pool } = require('pg');
+import { Pool, PoolClient } from 'pg';
+import * as fs from 'fs';
+import * as path from 'path';
+
+interface DatabaseConfig {
+    host: string;
+    port: number;
+    database: string;
+    user: string;
+    password: string;
+}
+
+interface Post {
+    instagram_post_id: string;
+    username?: string | null;
+    caption?: string | null;
+    image_url?: string | null;
+    post_url: string;
+    likes_count?: number;
+    comments_count?: number;
+    post_date?: string | null;
+}
+
+interface PostResult {
+    id: number;
+    instagram_post_id: string;
+}
+
+interface DatabaseStats {
+    total_posts: number;
+    unique_users: number;
+    top_users: Array<{
+        username: string;
+        post_count: string;
+    }>;
+}
 
 class Database {
-    constructor(config) {
+    private pool: Pool;
+
+    constructor(config: DatabaseConfig) {
         this.pool = new Pool({
             host: config.host,
             port: config.port,
@@ -11,38 +48,37 @@ class Database {
         });
     }
 
-    async connect() {
+    async connect(): Promise<boolean> {
         try {
             const client = await this.pool.connect();
             console.log('Connected to PostgreSQL database');
             client.release();
             return true;
         } catch (error) {
-            console.error('Failed to connect to database:', error.message);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error('Failed to connect to database:', errorMessage);
             throw error;
         }
     }
 
-    async createTables() {
+    async createTables(): Promise<void> {
         const client = await this.pool.connect();
         try {
-            const fs = require('fs');
-            const path = require('path');
-            
             const schemaPath = path.join(__dirname, '..', 'schema.sql');
             const schema = fs.readFileSync(schemaPath, 'utf8');
             
             await client.query(schema);
             console.log('Database tables created/verified successfully');
         } catch (error) {
-            console.error('Failed to create tables:', error.message);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error('Failed to create tables:', errorMessage);
             throw error;
         } finally {
             client.release();
         }
     }
 
-    async insertPost(post) {
+    async insertPost(post: Post): Promise<PostResult> {
         const client = await this.pool.connect();
         try {
             const query = `
@@ -65,9 +101,9 @@ class Database {
 
             const values = [
                 post.instagram_post_id,
-                post.username,
-                post.caption,
-                post.image_url,
+                post.username || null,
+                post.caption || null,
+                post.image_url || null,
                 post.post_url,
                 post.likes_count || 0,
                 post.comments_count || 0,
@@ -77,24 +113,26 @@ class Database {
             const result = await client.query(query, values);
             return result.rows[0];
         } catch (error) {
-            console.error(`Failed to insert post ${post.instagram_post_id}:`, error.message);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error(`Failed to insert post ${post.instagram_post_id}:`, errorMessage);
             throw error;
         } finally {
             client.release();
         }
     }
 
-    async insertBulkPosts(posts) {
+    async insertBulkPosts(posts: Post[]): Promise<PostResult[]> {
         console.log(`Inserting ${posts.length} posts to database...`);
         
-        const results = [];
+        const results: PostResult[] = [];
         for (const post of posts) {
             try {
                 const result = await this.insertPost(post);
                 results.push(result);
                 console.log(`✓ Inserted/Updated post: ${post.instagram_post_id}`);
             } catch (error) {
-                console.error(`✗ Failed to insert post ${post.instagram_post_id}:`, error.message);
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                console.error(`✗ Failed to insert post ${post.instagram_post_id}:`, errorMessage);
             }
         }
 
@@ -102,7 +140,7 @@ class Database {
         return results;
     }
 
-    async getAllSavedPosts() {
+    async getAllSavedPosts(): Promise<any[]> {
         const client = await this.pool.connect();
         try {
             const query = `
@@ -112,14 +150,15 @@ class Database {
             const result = await client.query(query);
             return result.rows;
         } catch (error) {
-            console.error('Failed to fetch saved posts:', error.message);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error('Failed to fetch saved posts:', errorMessage);
             throw error;
         } finally {
             client.release();
         }
     }
 
-    async getPostsByUsername(username) {
+    async getPostsByUsername(username: string): Promise<any[]> {
         const client = await this.pool.connect();
         try {
             const query = `
@@ -130,14 +169,15 @@ class Database {
             const result = await client.query(query, [username]);
             return result.rows;
         } catch (error) {
-            console.error(`Failed to fetch posts by username ${username}:`, error.message);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error(`Failed to fetch posts by username ${username}:`, errorMessage);
             throw error;
         } finally {
             client.release();
         }
     }
 
-    async getStats() {
+    async getStats(): Promise<DatabaseStats> {
         const client = await this.pool.connect();
         try {
             const queries = [
@@ -156,17 +196,18 @@ class Database {
                 top_users: topUsersResult.rows
             };
         } catch (error) {
-            console.error('Failed to fetch stats:', error.message);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error('Failed to fetch stats:', errorMessage);
             throw error;
         } finally {
             client.release();
         }
     }
 
-    async close() {
+    async close(): Promise<void> {
         await this.pool.end();
         console.log('Database connection closed');
     }
 }
 
-module.exports = Database;
+export default Database;

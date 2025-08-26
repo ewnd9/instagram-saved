@@ -1,4 +1,4 @@
-FROM node:22-bullseye
+FROM node:22-bookworm
 
 # Install system dependencies for Puppeteer
 RUN apt-get update && apt-get install -y \
@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y \
     libasound2 \
     libpangocairo-1.0-0 \
     libatk1.0-0 \
-    libcairo1 \
+    libcairo2 \
     libdrm2 \
     libxkbcommon0 \
     libatspi2.0-0 \
@@ -35,23 +35,8 @@ RUN apt-get update && apt-get install -y \
     libgbm1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Chrome
-RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set up user
-RUN useradd -m -s /bin/bash node
+# running as root, otherwise: npm error Error: EACCES: permission denied, mkdir '/usr/local/lib/node_modules/@anthropic-ai'
+RUN npm install -g @anthropic-ai/claude-code
 USER node
-
-# Set working directory
 WORKDIR /workspace
 
-# Install global packages
-USER root
-RUN npm install -g typescript ts-node @anthropics/claude-code
-
-# Switch back to node user
-USER node

@@ -4,7 +4,6 @@
   "service": "app",
   "workspaceFolder": "/workspace",
   "shutdownAction": "stopCompose",
-  
   "customizations": {
     "vscode": {
       "extensions": [
@@ -29,7 +28,6 @@
       }
     }
   },
-  
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "22"
@@ -37,14 +35,12 @@
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  
-  "forwardPorts": [5432],
-  "postCreateCommand": "yarn install",
-  
+  "forwardPorts": [],
+  // without "sudo": "Internal Error: EACCES: permission denied, symlink '../lib/node_modules/corepack/dist/pnpm.js' -> '/usr/local/bin/pnpm'"
+  "postCreateCommand": "corepack enable yarn && corepack install && yarn install",
   "mounts": [
     "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind,consistency=cached",
     "source=${localEnv:HOME}/.claude.json,target=/home/node/.claude.json,type=bind,consistency=cached"
   ],
-  
-  "remoteUser": "node"
+  "containerUser": "node"
 }

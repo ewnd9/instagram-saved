@@ -420,7 +420,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@playwright/test@npm:^1.48.0":
+"@playwright/test@npm:1.55.0":
   version: 1.55.0
   resolution: "@playwright/test@npm:1.55.0"
   dependencies:
@@ -1057,7 +1057,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "instagram-saved-posts-scraper@workspace:."
   dependencies:
-    "@playwright/test": "npm:^1.48.0"
+    "@playwright/test": "npm:1.55.0"
     "@types/node": "npm:^24.3.0"
     "@types/pg": "npm:^8"
     dotenv: "npm:^17.2.1"

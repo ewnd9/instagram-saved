@@ -16,3 +16,6 @@ dist
 
 # Environment variables
 .env
+
+# CLI output
+saved.json

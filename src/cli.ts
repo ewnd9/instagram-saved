@@ -1,29 +1,21 @@
 import dotenv from "dotenv";
+import fs from "fs/promises";
+import path from "path";
 dotenv.config();
 
 import { validateEnv, type Env } from "./env";
 import InstagramAuth from "./auth";
 import InstagramScraper from "./scraper";
-import Database from "./database";
 
 interface ScrapeOptions {
   getDetails?: boolean;
   maxScrolls?: number;
+  outputFile?: string;
 }
 
-interface DatabaseStats {
-  total_posts: number;
-  unique_users: number;
-  top_users: Array<{
-    username: string;
-    post_count: string;
-  }>;
-}
-
-class InstagramSavedPostsScraper {
+class InstagramSavedPostsCLI {
   private auth: InstagramAuth | null = null;
   private scraper: InstagramScraper | null = null;
-  private database: Database | null = null;
   public env: Env;
 
   constructor() {
@@ -31,10 +23,7 @@ class InstagramSavedPostsScraper {
   }
 
   async initialize(): Promise<void> {
-    console.log("🚀 Initializing Instagram Saved Posts Scraper...");
-
-    this.database = new Database(this.env.DATABASE_URL);
-    await this.database.connect();
+    console.log("🚀 Initializing Instagram Saved Posts CLI...");
 
     this.auth = new InstagramAuth(
       this.env.INSTAGRAM_USERNAME,
@@ -48,8 +37,8 @@ class InstagramSavedPostsScraper {
     console.log("✅ Initialization complete");
   }
 
-  async scrapeAndStore(options: ScrapeOptions = {}): Promise<void> {
-    const { getDetails = false, maxScrolls = 10 } = options;
+  async scrapeToFile(options: ScrapeOptions = {}): Promise<void> {
+    const { getDetails = false, maxScrolls = 10, outputFile = "saved.json" } = options;
 
     try {
       console.log("🔐 Logging in to Instagram...");
@@ -69,18 +58,14 @@ class InstagramSavedPostsScraper {
         return;
       }
 
-      console.log("💾 Storing posts to database...");
-      const results = await this.database!.insertBulkPosts(posts);
-
-      console.log("📊 Getting database stats...");
-      const stats: DatabaseStats = await this.database!.getStats();
+      console.log(`💾 Saving ${posts.length} posts to ${outputFile}...`);
+      
+      const outputPath = path.resolve(outputFile);
+      await fs.writeFile(outputPath, JSON.stringify(posts, null, 2));
 
       console.log("\n✅ Scraping completed successfully!");
-      console.log(`📈 Stats:`);
-      console.log(`   - Posts processed this run: ${posts.length}`);
-      console.log(`   - Posts stored/updated: ${results.length}`);
-      console.log(`   - Total posts in database: ${stats.total_posts}`);
-      console.log(`   - Unique users: ${stats.unique_users}`);
+      console.log(`📁 Posts saved to: ${outputPath}`);
+      console.log(`📊 Total posts scraped: ${posts.length}`);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
@@ -96,21 +81,17 @@ class InstagramSavedPostsScraper {
       await this.auth.closeBrowser();
     }
 
-    if (this.database) {
-      await this.database.close();
-    }
-
     console.log("✅ Cleanup complete");
   }
 
   async run(options: ScrapeOptions = {}): Promise<void> {
     try {
       await this.initialize();
-      await this.scrapeAndStore(options);
+      await this.scrapeToFile(options);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
-      console.error("💥 Application failed:", errorMessage);
+      console.error("💥 CLI failed:", errorMessage);
       process.exit(1);
     } finally {
       await this.cleanup();
@@ -123,20 +104,24 @@ async function main(): Promise<void> {
   const getDetails = args.includes("--details") || args.includes("-d");
   const scrollsArg = args.find((arg) => arg.startsWith("--scrolls="));
   const maxScrolls = scrollsArg ? parseInt(scrollsArg.split("=")[1]) : 10;
+  const outputArg = args.find((arg) => arg.startsWith("--output="));
+  const outputFile = outputArg ? outputArg.split("=")[1] : "saved.json";
 
-  const scraper = new InstagramSavedPostsScraper();
+  const cli = new InstagramSavedPostsCLI();
 
   console.log("🎯 Configuration:");
   console.log(`   - Get post details: ${getDetails ? "Yes" : "No"}`);
   console.log(`   - Max scrolls: ${maxScrolls}`);
+  console.log(`   - Output file: ${outputFile}`);
   console.log(
-    `   - Headless mode: ${scraper.env.HEADLESS} ${process.env.HEADLESS}`
+    `   - Headless mode: ${cli.env.HEADLESS}`
   );
   console.log("");
 
-  await scraper.run({
+  await cli.run({
     getDetails,
     maxScrolls,
+    outputFile,
   });
 }
 
@@ -149,4 +134,4 @@ if (require.main === module) {
   });
 }
 
-export default InstagramSavedPostsScraper;
+export default InstagramSavedPostsCLI;

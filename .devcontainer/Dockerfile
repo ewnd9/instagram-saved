@@ -40,6 +40,7 @@ RUN apt-get update && \
     apt install -y postgresql-common postgresql-client-15 && \
     rm -rf /var/lib/apt/lists/* && \
     npm install -g @anthropic-ai/claude-code && \
+    npx -y playwright@1.55.0 install --with-deps && \
     corepack enable yarn && \
     bash -c "echo 'alias cla=\"claude --dangerously-skip-permissions\"' >> /home/node/.bashrc"
 USER node

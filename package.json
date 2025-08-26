@@ -7,9 +7,11 @@
   "scripts": {
     "build": "tsc",
     "start": "npm run build && node dist/index.js",
-    "dev": "npm run build && HEADLESS=false node dist/index.js",
+    "dev": "npm run build && node dist/index.js",
     "scrape": "npm run build && node dist/index.js",
     "scrape:details": "npm run build && node dist/index.js --details",
+    "scrape:cli": "npm run build && HEADLESS=false node dist/cli.js",
+    "scrape:cli:details": "npm run build && HEADLESS=false node dist/cli.js --details",
     "watch": "tsc --watch",
     "clean": "rm -rf dist",
     "db:generate": "drizzle-kit generate",
@@ -25,7 +27,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@playwright/test": "^1.48.0",
+    "@playwright/test": "1.55.0",
     "dotenv": "^17.2.1",
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.5",

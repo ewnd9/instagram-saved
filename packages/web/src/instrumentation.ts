@@ -1,3 +1,6 @@
+import 'reflect-metadata';
+import './server/di/container';
+
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { startWorkers } = await import('~/server/queue/workers');

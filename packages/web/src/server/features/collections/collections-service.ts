@@ -1,31 +1,34 @@
-import { eq } from 'drizzle-orm';
-import { z } from 'zod';
-import { createTRPCRouter, publicProcedure } from '~/server/api/trpc';
+import { desc, eq } from 'drizzle-orm';
+import { singleton } from 'tsyringe';
 import { collections, posts } from '~/server/db/schema';
+import { DatabaseService } from '../database/database-service';
 
-const postSchema = z.object({
-  id: z.string().min(1),
-  url: z.string().url(),
-});
+export interface CollectionData {
+  id: string;
+  url: string;
+  user: string;
+  name: string;
+  posts: Array<{
+    id: string;
+    url: string;
+  }>;
+}
 
-const collectionSchema = z.object({
-  user: z.string().min(1).max(30),
-  name: z.string().min(1).max(255),
-  id: z.string().regex(/^\d+$/),
-  url: z.string().url(),
-  posts: z.array(postSchema),
-});
+@singleton()
+export class CollectionsService {
+  constructor(private databaseService: DatabaseService) {}
 
-const savedCollectionsSchema = z.array(collectionSchema);
+  private get db() {
+    return this.databaseService.db;
+  }
 
-export const collectionsRouter = createTRPCRouter({
-  importSavedCollections: publicProcedure.input(savedCollectionsSchema).mutation(async ({ ctx, input }) => {
+  async importSavedCollections(collectionsData: CollectionData[]) {
     const results = [];
 
-    for (const collection of input) {
+    for (const collection of collectionsData) {
       try {
         // Insert or update collection
-        await ctx.db
+        await this.db
           .insert(collections)
           .values({
             id: collection.id,
@@ -52,7 +55,7 @@ export const collectionsRouter = createTRPCRouter({
 
         if (postsToInsert.length > 0) {
           for (const post of postsToInsert) {
-            await ctx.db
+            await this.db
               .insert(posts)
               .values(post)
               .onConflictDoUpdate({
@@ -81,57 +84,51 @@ export const collectionsRouter = createTRPCRouter({
     }
 
     return {
-      collectionsProcessed: input.length,
+      collectionsProcessed: collectionsData.length,
       results,
     };
-  }),
+  }
 
-  getAllCollections: publicProcedure.query(async ({ ctx }) => {
-    const allCollections = await ctx.db.query.collections.findMany({
-      orderBy: (collections, { desc }) => [desc(collections.updatedAt)],
+  async getAllCollections() {
+    return await this.db.query.collections.findMany({
+      orderBy: [desc(collections.updatedAt)],
       with: {
         posts: {
-          orderBy: (posts, { desc }) => [desc(posts.createdAt)],
+          orderBy: [desc(posts.createdAt)],
           with: {
             profile: true,
           },
         },
       },
     });
+  }
 
-    return allCollections;
-  }),
-
-  getCollectionById: publicProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
-    const collection = await ctx.db.query.collections.findFirst({
-      where: eq(collections.id, input.id),
+  async getCollectionById(id: string) {
+    return await this.db.query.collections.findFirst({
+      where: eq(collections.id, id),
       with: {
         posts: {
-          orderBy: (posts, { desc }) => [desc(posts.createdAt)],
+          orderBy: [desc(posts.createdAt)],
           with: {
             profile: true,
           },
         },
       },
     });
+  }
 
-    return collection;
-  }),
-
-  getCollectionsByUser: publicProcedure.input(z.object({ user: z.string() })).query(async ({ ctx, input }) => {
-    const userCollections = await ctx.db.query.collections.findMany({
-      where: eq(collections.user, input.user),
-      orderBy: (collections, { desc }) => [desc(collections.updatedAt)],
+  async getCollectionsByUser(user: string) {
+    return await this.db.query.collections.findMany({
+      where: eq(collections.user, user),
+      orderBy: [desc(collections.updatedAt)],
       with: {
         posts: {
-          orderBy: (posts, { desc }) => [desc(posts.createdAt)],
+          orderBy: [desc(posts.createdAt)],
           with: {
             profile: true,
           },
         },
       },
     });
-
-    return userCollections;
-  }),
-});
+  }
+}

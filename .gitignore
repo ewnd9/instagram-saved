@@ -24,3 +24,5 @@ saved.json
 browser-session/
 # turbo
 .turbo
+.turbo-docker
+tmp-turbo-prune

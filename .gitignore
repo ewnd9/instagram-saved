@@ -25,4 +25,4 @@ browser-session/
 # turbo
 .turbo
 .turbo-docker
-tmp-turbo-prune
+.turbo-prune

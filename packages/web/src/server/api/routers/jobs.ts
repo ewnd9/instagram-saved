@@ -1,11 +1,8 @@
 import type PgBoss from 'pg-boss';
-import postgres from 'postgres';
 import { z } from 'zod';
-import { env } from '~/env';
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc';
+import { conn } from '~/server/db';
 import { getBoss } from '~/server/queue';
-
-const conn = postgres(env.DATABASE_URL);
 
 const JobStateSchema = z.enum(['created', 'retry', 'active', 'completed', 'cancelled', 'failed']);
 

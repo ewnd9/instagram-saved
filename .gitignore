@@ -22,3 +22,5 @@ saved.json
 
 # Browser session data
 browser-session/
+# turbo
+.turbo

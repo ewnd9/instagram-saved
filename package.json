@@ -10,11 +10,17 @@
   "scripts": {
     "dev": "yarn workspace web dev",
     "cli:upload": "yarn workspace @instagram-scraper/cli build && yarn workspace @instagram-scraper/cli start upload",
-    "cli:scrape": "yarn workspace @instagram-scraper/cli build && HEADLESS=false yarn workspace @instagram-scraper/cli start"
+    "cli:scrape": "yarn workspace @instagram-scraper/cli build && HEADLESS=false yarn workspace @instagram-scraper/cli start",
+    "lint": "biome check ./ --write",
+    "prepare": "husky"
   },
   "license": "MIT",
   "devDependencies": {
+    "@biomejs/biome": "^2.2.2",
     "@types/node": "^22.3.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.5",
+    "turbo": "^2.5.6",
     "typescript": "^5.9.2"
   },
   "engines": {

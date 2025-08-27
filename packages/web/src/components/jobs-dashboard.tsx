@@ -1,29 +1,29 @@
-import { useState } from "react";
-import { api } from "~/utils/api";
+import { useState } from 'react';
+import { api } from '~/utils/api';
 
 const STATE_COLORS = {
-  created: "bg-blue-100 text-blue-800",
-  retry: "bg-yellow-100 text-yellow-800", 
-  active: "bg-green-100 text-green-800",
-  completed: "bg-emerald-100 text-emerald-800",
-  cancelled: "bg-gray-100 text-gray-800",
-  failed: "bg-red-100 text-red-800",
+  created: 'bg-blue-100 text-blue-800',
+  retry: 'bg-yellow-100 text-yellow-800',
+  active: 'bg-green-100 text-green-800',
+  completed: 'bg-emerald-100 text-emerald-800',
+  cancelled: 'bg-gray-100 text-gray-800',
+  failed: 'bg-red-100 text-red-800',
 };
 
 const STATE_LABELS = {
-  created: "Created",
-  retry: "Retry",
-  active: "Active", 
-  completed: "Completed",
-  cancelled: "Cancelled",
-  failed: "Failed",
+  created: 'Created',
+  retry: 'Retry',
+  active: 'Active',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+  failed: 'Failed',
 };
 
 type JobState = keyof typeof STATE_COLORS;
 
 export function JobsDashboard() {
   const [selectedState, setSelectedState] = useState<JobState | undefined>();
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [_refreshKey, setRefreshKey] = useState(0);
 
   const { data: stats, refetch: refetchStats } = api.jobs.getStats.useQuery(undefined, {
     refetchInterval: 5000, // Refresh every 5 seconds
@@ -53,7 +53,7 @@ export function JobsDashboard() {
   });
 
   const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey((prev) => prev + 1);
     refetchStats();
     refetchJobs();
   };
@@ -63,10 +63,7 @@ export function JobsDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Jobs Dashboard</h1>
-        <button
-          onClick={handleRefresh}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
+        <button onClick={handleRefresh} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
           Refresh
         </button>
       </div>
@@ -77,14 +74,14 @@ export function JobsDashboard() {
           <div className="text-2xl font-bold text-gray-900">{stats?.total || 0}</div>
           <div className="text-sm text-gray-600">Total Jobs</div>
         </div>
-        
+
         {stats?.byState.map((stat: any) => (
           <div
             key={stat.state}
             className={`p-4 rounded-lg shadow border cursor-pointer transition-all ${
               selectedState === stat.state ? 'ring-2 ring-blue-500' : ''
             }`}
-            onClick={() => setSelectedState(selectedState === stat.state ? undefined : stat.state as JobState)}
+            onClick={() => setSelectedState(selectedState === stat.state ? undefined : (stat.state as JobState))}
           >
             <div className="text-2xl font-bold text-gray-900">{stat.count}</div>
             <div className={`text-sm px-2 py-1 rounded-full inline-block ${STATE_COLORS[stat.state as JobState]}`}>
@@ -185,10 +182,7 @@ export function JobsDashboard() {
               Recent Jobs {selectedState && `(${STATE_LABELS[selectedState]})`}
             </h2>
             {selectedState && (
-              <button
-                onClick={() => setSelectedState(undefined)}
-                className="text-sm text-blue-600 hover:text-blue-800"
-              >
+              <button onClick={() => setSelectedState(undefined)} className="text-sm text-blue-600 hover:text-blue-800">
                 Show All
               </button>
             )}
@@ -198,9 +192,7 @@ export function JobsDashboard() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Job
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   State
                 </th>
@@ -237,12 +229,8 @@ export function JobsDashboard() {
                       {STATE_LABELS[job.state as JobState]}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {new Date(job.created_on).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {new Date(job.updated_on).toLocaleString()}
-                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{new Date(job.created_on).toLocaleString()}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{new Date(job.updated_on).toLocaleString()}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">
                     {job.retry_count || 0}/{job.retry_limit || 0}
                   </td>

@@ -1,7 +1,7 @@
-import { postRouter } from "~/server/api/routers/post";
-import { collectionsRouter } from "~/server/api/routers/collections";
-import { jobsRouter } from "~/server/api/routers/jobs";
-import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
+import { collectionsRouter } from '~/server/api/routers/collections';
+import { jobsRouter } from '~/server/api/routers/jobs';
+import { postRouter } from '~/server/api/routers/post';
+import { createCallerFactory, createTRPCRouter } from '~/server/api/trpc';
 
 /**
  * This is the primary router for your server.

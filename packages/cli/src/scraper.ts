@@ -1,17 +1,6 @@
-import { Page } from "@playwright/test";
-import * as fs from "fs/promises";
-import * as path from "path";
-
-interface PostData {
-  instagram_post_id: string;
-  post_url: string;
-  image_url: string | null;
-  username?: string | null;
-  caption?: string | null;
-  likes_count?: number;
-  comments_count?: number;
-  post_date?: string | null;
-}
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
+import type { Page } from '@playwright/test';
 
 interface CollectionPost {
   id: string;
@@ -26,14 +15,6 @@ interface SavedCollection {
   posts: CollectionPost[];
 }
 
-interface PostDetails {
-  username: string | null;
-  caption: string | null;
-  likes_count: number;
-  comments_count: number;
-  post_date: string | null;
-}
-
 class InstagramScraper {
   private page: Page;
 
@@ -41,19 +22,19 @@ class InstagramScraper {
     this.page = page;
   }
 
-  private async saveCollectionsToFile(collections: SavedCollection[], filename: string = "saved.json"): Promise<void> {
+  private async saveCollectionsToFile(collections: SavedCollection[], filename: string = 'saved.json'): Promise<void> {
     try {
       const outputPath = path.resolve(filename);
       await fs.writeFile(outputPath, JSON.stringify(collections, null, 2));
       console.log(`💾 Progress saved to ${filename} (${collections.length} collections)`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`Failed to save progress to ${filename}:`, errorMessage);
     }
   }
 
   async scrollToLoadPosts(maxScrolls: number = 10): Promise<void> {
-    console.log("Scrolling to load more posts...");
+    console.log('Scrolling to load more posts...');
 
     for (let i = 0; i < maxScrolls; i++) {
       await this.page.evaluate(() => {
@@ -62,7 +43,7 @@ class InstagramScraper {
 
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      const newHeight = await this.page.evaluate("document.body.scrollHeight");
+      const newHeight = await this.page.evaluate('document.body.scrollHeight');
       console.log(`Scroll ${i + 1}/${maxScrolls} - Page height: ${newHeight}`);
     }
 
@@ -74,7 +55,7 @@ class InstagramScraper {
   async extractPostsFromCollection(collectionUrl: string): Promise<CollectionPost[]> {
     try {
       console.log(`Navigating to collection: ${collectionUrl}`);
-      await this.page.goto(collectionUrl, { waitUntil: "domcontentloaded" });
+      await this.page.goto(collectionUrl, { waitUntil: 'domcontentloaded' });
       await this.page.waitForSelector('article', { timeout: 10000 });
 
       // Scroll to load posts in this collection
@@ -88,7 +69,7 @@ class InstagramScraper {
           try {
             const anchorElement = link as HTMLAnchorElement;
             const postUrl = anchorElement.href;
-            const postIdMatch = postUrl.match(/\/p\/([^\/]+)/);
+            const postIdMatch = postUrl.match(/\/p\/([^/]+)/);
             const postId = postIdMatch?.[1];
 
             if (postId) {
@@ -98,7 +79,7 @@ class InstagramScraper {
               });
             }
           } catch (error) {
-            console.error("Error extracting post from collection:", error);
+            console.error('Error extracting post from collection:', error);
           }
         });
 
@@ -108,7 +89,7 @@ class InstagramScraper {
       console.log(`Extracted ${posts.length} posts from collection`);
       return posts;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`Failed to extract posts from collection ${collectionUrl}:`, errorMessage);
       return [];
     }
@@ -116,23 +97,21 @@ class InstagramScraper {
 
   async extractSavedPosts(): Promise<SavedCollection[]> {
     try {
-      console.log("Extracting saved post collections...");
+      console.log('Extracting saved post collections...');
 
       const collections = await this.page.evaluate((): Omit<SavedCollection, 'posts'>[] => {
-        const collectionElements = document.querySelectorAll(
-          'a[href*="/saved/"]'
-        );
+        const collectionElements = document.querySelectorAll('a[href*="/saved/"]');
         const extractedCollections: Omit<SavedCollection, 'posts'>[] = [];
 
         collectionElements.forEach((link) => {
           try {
             const anchorElement = link as HTMLAnchorElement;
             const collectionUrl = anchorElement.href;
-            const collectionMatch = collectionUrl.match(/\/([^\/]+)\/saved\/([^\/]+)\/([^\/]+)/);
-            
+            const collectionMatch = collectionUrl.match(/\/([^/]+)\/saved\/([^/]+)\/([^/]+)/);
+
             if (collectionMatch) {
               const [, user, name, id] = collectionMatch;
-              
+
               extractedCollections.push({
                 user,
                 name,
@@ -141,7 +120,7 @@ class InstagramScraper {
               });
             }
           } catch (error) {
-            console.error("Error extracting collection:", error);
+            console.error('Error extracting collection:', error);
           }
         });
 
@@ -152,18 +131,18 @@ class InstagramScraper {
 
       // Now crawl each collection to get its posts
       const collectionsWithPosts: SavedCollection[] = [];
-      
+
       for (let i = 0; i < collections.length; i++) {
         const collection = collections[i];
         console.log(`Crawling collection ${i + 1}/${collections.length}: ${collection.name}`);
-        
+
         const posts = await this.extractPostsFromCollection(collection.url);
-        
+
         const collectionWithPosts = {
           ...collection,
           posts,
         };
-        
+
         collectionsWithPosts.push(collectionWithPosts);
 
         // Save progress after each collection
@@ -178,9 +157,8 @@ class InstagramScraper {
       console.log(`Successfully crawled all ${collectionsWithPosts.length} collections`);
       return collectionsWithPosts;
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      console.error("Failed to extract saved post collections:", errorMessage);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to extract saved post collections:', errorMessage);
       throw error;
     }
   }
@@ -192,9 +170,8 @@ class InstagramScraper {
 
       return collections;
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      console.error("Failed to scrape saved post collections:", errorMessage);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to scrape saved post collections:', errorMessage);
       throw error;
     }
   }

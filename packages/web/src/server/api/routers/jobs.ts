@@ -1,34 +1,27 @@
-import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { getBoss } from "~/server/queue";
-import postgres from "postgres";
-import { env } from "~/env";
-import type PgBoss from "pg-boss";
+import type PgBoss from 'pg-boss';
+import postgres from 'postgres';
+import { z } from 'zod';
+import { env } from '~/env';
+import { createTRPCRouter, publicProcedure } from '~/server/api/trpc';
+import { getBoss } from '~/server/queue';
 
 const conn = postgres(env.DATABASE_URL);
 
-const JobStateSchema = z.enum([
-  "created",
-  "retry",
-  "active",
-  "completed",
-  "cancelled",
-  "failed",
-]);
+const JobStateSchema = z.enum(['created', 'retry', 'active', 'completed', 'cancelled', 'failed']);
 
-const JobSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  data: z.any(),
-  state: JobStateSchema,
-  retry_count: z.number().nullable(),
-  retry_limit: z.number().nullable(),
-  start_after: z.date().nullable(),
-  started_on: z.date().nullable(),
-  completed_on: z.date().nullable(),
-  created_on: z.date(),
-  updated_on: z.date(),
-});
+// const JobSchema = z.object({
+//   id: z.string(),
+//   name: z.string(),
+//   data: z.any(),
+//   state: JobStateSchema,
+//   retry_count: z.number().nullable(),
+//   retry_limit: z.number().nullable(),
+//   start_after: z.date().nullable(),
+//   started_on: z.date().nullable(),
+//   completed_on: z.date().nullable(),
+//   created_on: z.date(),
+//   updated_on: z.date(),
+// });
 
 // Type for jobs returned from raw SQL queries (based on actual pg-boss schema)
 interface DbJob {
@@ -36,7 +29,7 @@ interface DbJob {
   name: string;
   priority: number;
   data: unknown;
-  state: "created" | "retry" | "active" | "completed" | "cancelled" | "failed";
+  state: 'created' | 'retry' | 'active' | 'completed' | 'cancelled' | 'failed';
   retry_limit: number;
   retry_count: number;
   retry_delay: number;
@@ -70,7 +63,7 @@ export const jobsRouter = createTRPCRouter({
     const stats = await (boss as any).countStates();
 
     const byState = Object.entries(stats)
-      .filter(([key]) => !["queues", "all"].includes(key))
+      .filter(([key]) => !['queues', 'all'].includes(key))
       .map(([state, count]) => ({
         state,
         count: count as number,
@@ -93,7 +86,7 @@ export const jobsRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const jobs: DbJob[] = input.state
         ? await conn`
-            SELECT 
+            SELECT
               id,
               name,
               data,
@@ -104,13 +97,13 @@ export const jobsRouter = createTRPCRouter({
               started_on,
               completed_on,
               created_on
-            FROM pgboss.job 
+            FROM pgboss.job
             WHERE state = ${input.state}
-            ORDER BY created_on DESC 
+            ORDER BY created_on DESC
             LIMIT ${input.limit}
           `
         : await conn`
-            SELECT 
+            SELECT
               id,
               name,
               data,
@@ -121,15 +114,15 @@ export const jobsRouter = createTRPCRouter({
               started_on,
               completed_on,
               created_on
-            FROM pgboss.job 
-            ORDER BY created_on DESC 
+            FROM pgboss.job
+            ORDER BY created_on DESC
             LIMIT ${input.limit}
           `;
 
       return jobs.map((job) => ({
         id: job.id,
         name: job.name,
-        data: typeof job.data === "string" ? JSON.parse(job.data) : job.data,
+        data: typeof job.data === 'string' ? JSON.parse(job.data) : job.data,
         state: job.state,
         retry_count: job.retry_count,
         retry_limit: job.retry_limit,
@@ -142,11 +135,9 @@ export const jobsRouter = createTRPCRouter({
     }),
 
   // Get failed jobs with details
-  getFailedJobs: publicProcedure
-    .input(z.object({ limit: z.number().default(25) }))
-    .query(async ({ input }) => {
-      const jobs: DbJob[] = await conn`
-        SELECT 
+  getFailedJobs: publicProcedure.input(z.object({ limit: z.number().default(25) })).query(async ({ input }) => {
+    const jobs: DbJob[] = await conn`
+        SELECT
           id,
           name,
           data,
@@ -156,35 +147,35 @@ export const jobsRouter = createTRPCRouter({
           output,
           created_on,
           completed_on
-        FROM pgboss.job 
+        FROM pgboss.job
         WHERE state = 'failed'
-        ORDER BY completed_on DESC 
+        ORDER BY completed_on DESC
         LIMIT ${input.limit}
       `;
 
-      return jobs.map((job) => ({
-        id: job.id,
-        name: job.name,
-        data: typeof job.data === "string" ? JSON.parse(job.data) : job.data,
-        state: job.state,
-        retry_count: job.retry_count,
-        retry_limit: job.retry_limit,
-        created_on: job.created_on,
-        completed_on: job.completed_on,
-        output: typeof job.output === "string" ? JSON.parse(job.output) : job.output,
-      }));
-    }),
+    return jobs.map((job) => ({
+      id: job.id,
+      name: job.name,
+      data: typeof job.data === 'string' ? JSON.parse(job.data) : job.data,
+      state: job.state,
+      retry_count: job.retry_count,
+      retry_limit: job.retry_limit,
+      created_on: job.created_on,
+      completed_on: job.completed_on,
+      output: typeof job.output === 'string' ? JSON.parse(job.output) : job.output,
+    }));
+  }),
 
   // Get active/running jobs
   getActiveJobs: publicProcedure.query(async () => {
     const jobs: ActiveDbJob[] = await conn`
-      SELECT 
+      SELECT
         id,
         name,
         data,
         started_on,
         created_on
-      FROM pgboss.job 
+      FROM pgboss.job
       WHERE state = 'active'
       ORDER BY started_on DESC
     `;
@@ -192,29 +183,25 @@ export const jobsRouter = createTRPCRouter({
     return jobs.map((job) => ({
       id: job.id,
       name: job.name,
-      data: typeof job.data === "string" ? JSON.parse(job.data) : job.data,
+      data: typeof job.data === 'string' ? JSON.parse(job.data) : job.data,
       started_on: job.started_on,
       created_on: job.created_on,
     }));
   }),
 
   // Cancel a job
-  cancelJob: publicProcedure
-    .input(z.object({ id: z.string(), name: z.string() }))
-    .mutation(async ({ input }) => {
-      const boss = await getBoss();
-      await boss.cancel(input.name, input.id);
-      return { success: true };
-    }),
+  cancelJob: publicProcedure.input(z.object({ id: z.string(), name: z.string() })).mutation(async ({ input }) => {
+    const boss = await getBoss();
+    await boss.cancel(input.name, input.id);
+    return { success: true };
+  }),
 
   // Retry a failed job
-  retryJob: publicProcedure
-    .input(z.object({ id: z.string(), name: z.string() }))
-    .mutation(async ({ input }) => {
-      const boss = await getBoss();
-      await boss.retry(input.name, input.id);
-      return { success: true };
-    }),
+  retryJob: publicProcedure.input(z.object({ id: z.string(), name: z.string() })).mutation(async ({ input }) => {
+    const boss = await getBoss();
+    await boss.retry(input.name, input.id);
+    return { success: true };
+  }),
 
   // Get queue information
   getQueues: publicProcedure.query(async () => {

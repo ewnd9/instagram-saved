@@ -1,5 +1,5 @@
-import postgres from "postgres";
-import { env } from "~/env";
+import postgres from 'postgres';
+import { env } from '~/env';
 
 const conn = postgres(env.DATABASE_URL);
 
@@ -7,10 +7,10 @@ export async function setupDatabase() {
   try {
     // Try to create the pgcrypto extension if it doesn't exist
     await conn`CREATE EXTENSION IF NOT EXISTS pgcrypto`;
-    console.log("pgcrypto extension enabled");
+    console.log('pgcrypto extension enabled');
   } catch (error) {
-    console.warn("Could not enable pgcrypto extension:", error);
-    
+    console.warn('Could not enable pgcrypto extension:', error);
+
     // If pgcrypto fails, try to create a fallback function
     try {
       await conn`
@@ -18,9 +18,9 @@ export async function setupDatabase() {
           SELECT md5(random()::text || clock_timestamp()::text)::uuid;
         $$ LANGUAGE SQL;
       `;
-      console.log("Created fallback gen_random_uuid function");
+      console.log('Created fallback gen_random_uuid function');
     } catch (fallbackError) {
-      console.warn("Could not create fallback UUID function:", fallbackError);
+      console.warn('Could not create fallback UUID function:', fallbackError);
     }
   }
 }

@@ -1,5 +1,4 @@
-import React from "react";
-import Link from "next/link";
+import Link from 'next/link';
 
 interface Post {
   id: string;
@@ -23,10 +22,10 @@ interface CollectionCardProps {
 
 export default function CollectionCard({ collection }: CollectionCardProps) {
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
     }).format(new Date(date));
   };
 
@@ -74,9 +73,7 @@ export default function CollectionCard({ collection }: CollectionCardProps) {
       <div className="mb-4">
         <p className="text-sm text-gray-400">
           Created: {formatDate(collection.createdAt)}
-          {collection.updatedAt && (
-            <span> • Updated: {formatDate(collection.updatedAt)}</span>
-          )}
+          {collection.updatedAt && <span> • Updated: {formatDate(collection.updatedAt)}</span>}
         </p>
       </div>
 
@@ -88,20 +85,12 @@ export default function CollectionCard({ collection }: CollectionCardProps) {
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5l7 7-7 7"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
       </div>
 
       {/* Full card clickable link */}
-      <Link
-        href={`/collections/${collection.id}`}
-        className="absolute inset-0 rounded-lg"
-      >
+      <Link href={`/collections/${collection.id}`} className="absolute inset-0 rounded-lg">
         <span className="sr-only">View {collection.name} collection</span>
       </Link>
     </div>

@@ -1,9 +1,9 @@
-import type { Job } from "pg-boss";
-import { db } from "~/server/db";
-import { posts, profiles } from "~/server/db/schema";
-import { eq } from "drizzle-orm";
-import type { ParseInstagramPostPayload } from "../jobs";
-import { parseInstagramPost } from "~/server/parsers/instagram-post";
+import { eq } from 'drizzle-orm';
+import type { Job } from 'pg-boss';
+import { db } from '~/server/db';
+import { posts, profiles } from '~/server/db/schema';
+import { parseInstagramPost } from '~/server/parsers/instagram-post';
+import type { ParseInstagramPostPayload } from '../jobs';
 
 function extractPostIdFromUrl(url: string): string {
   const match = url.match(/\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/);
@@ -18,12 +18,9 @@ export async function handleParseInstagramPost(jobs: Job[]): Promise<void> {
     console.log(`Parsing Instagram post job: ${job.id}`);
 
     try {
-      const { url, collectionId, postId } =
-        job.data as ParseInstagramPostPayload;
+      const { url, collectionId, postId } = job.data as ParseInstagramPostPayload;
 
-      console.log(
-        `Parsing Instagram post: ${url} for collection ${collectionId}`
-      );
+      console.log(`Parsing Instagram post: ${url} for collection ${collectionId}`);
 
       // Extract the shortcode from the URL
       const shortcode = extractPostIdFromUrl(url);

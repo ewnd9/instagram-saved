@@ -1,7 +1,7 @@
-import Head from "next/head";
-import Link from "next/link";
-import { api } from "~/utils/api";
-import CollectionCard from "~/components/collection-card";
+import Head from 'next/head';
+import Link from 'next/link';
+import CollectionCard from '~/components/collection-card';
+import { api } from '~/utils/api';
 
 export default function Home() {
   const { data: collections, isLoading, error } = api.collections.getAllCollections.useQuery();
@@ -19,9 +19,7 @@ export default function Home() {
             <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">
               Instagram <span className="text-[hsl(280,100%,70%)]">Collections</span>
             </h1>
-            <p className="mt-4 text-xl text-gray-300">
-              Browse your saved Instagram posts organized by collection
-            </p>
+            <p className="mt-4 text-xl text-gray-300">Browse your saved Instagram posts organized by collection</p>
             <div className="mt-6">
               <Link
                 href="/jobs"
@@ -51,9 +49,7 @@ export default function Home() {
             <div className="text-center">
               <div className="rounded-lg bg-gray-500/20 border border-gray-500/50 p-8">
                 <h3 className="text-xl font-semibold text-white mb-2">No collections found</h3>
-                <p className="text-gray-400 mb-4">
-                  Upload your Instagram collections data using the CLI tool
-                </p>
+                <p className="text-gray-400 mb-4">Upload your Instagram collections data using the CLI tool</p>
                 <div className="bg-black/30 rounded-md p-3 text-left text-sm font-mono text-green-300">
                   <div>$ yarn cli:upload</div>
                 </div>
@@ -71,7 +67,7 @@ export default function Home() {
                   Total posts: {collections.reduce((sum, c) => sum + c.posts.length, 0)}
                 </div>
               </div>
-              
+
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {collections.map((collection) => (
                   <CollectionCard key={collection.id} collection={collection} />

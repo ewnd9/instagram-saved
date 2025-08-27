@@ -1,12 +1,12 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import fs from "fs";
-import path from "path";
-import Ajv from "ajv";
-import addFormats from "ajv-formats";
-import { db } from "~/server/db";
-import { collections, posts } from "~/server/db/schema";
-import { addJob, JOB_TYPES } from "~/server/queue/jobs";
-import type { ParseInstagramPostPayload } from "~/server/queue/jobs";
+import fs from 'node:fs';
+import path from 'node:path';
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { db } from '~/server/db';
+import { collections, posts } from '~/server/db/schema';
+import type { ParseInstagramPostPayload } from '~/server/queue/jobs';
+import { addJob, JOB_TYPES } from '~/server/queue/jobs';
 
 const ajv = new Ajv();
 addFormats(ajv);
@@ -22,26 +22,18 @@ type ApiResponse = {
   error?: string;
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<ApiResponse>
-) {
-  if (req.method !== "POST") {
+export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
+  if (req.method !== 'POST') {
     return res.status(405).json({
       success: false,
-      message: "Method not allowed",
+      message: 'Method not allowed',
     });
   }
 
   try {
     // Load and compile the JSON schema
-    const schemaPath = path.join(
-      process.cwd(),
-      "..",
-      "cli",
-      "saved.schema.json"
-    );
-    const schemaContent = fs.readFileSync(schemaPath, "utf-8");
+    const schemaPath = path.join(process.cwd(), '..', 'cli', 'saved.schema.json');
+    const schemaContent = fs.readFileSync(schemaPath, 'utf-8');
     const schema = JSON.parse(schemaContent);
     const validate = ajv.compile(schema);
 
@@ -50,7 +42,7 @@ export default async function handler(
     if (!isValid) {
       return res.status(400).json({
         success: false,
-        message: "Invalid data format",
+        message: 'Invalid data format',
         error: JSON.stringify(validate.errors),
       });
     }
@@ -135,9 +127,7 @@ export default async function handler(
           }
         }
       } catch (collectionError) {
-        errors.push(
-          `Failed to process collection ${collection.id}: ${collectionError}`
-        );
+        errors.push(`Failed to process collection ${collection.id}: ${collectionError}`);
       }
     }
 
@@ -153,16 +143,16 @@ export default async function handler(
     };
 
     if (errors.length > 0) {
-      response.error = `Some items failed to process: ${errors.join("; ")}`;
+      response.error = `Some items failed to process: ${errors.join('; ')}`;
     }
 
     return res.status(200).json(response);
   } catch (error) {
-    console.error("Import error:", error);
+    console.error('Import error:', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error",
-      error: error instanceof Error ? error.message : "Unknown error",
+      message: 'Internal server error',
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }
@@ -170,7 +160,7 @@ export default async function handler(
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: "10mb",
+      sizeLimit: '10mb',
     },
   },
 };

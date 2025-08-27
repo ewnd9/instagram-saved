@@ -1,6 +1,6 @@
-import Head from "next/head";
-import Link from "next/link";
-import { JobsDashboard } from "~/components/jobs-dashboard";
+import Head from 'next/head';
+import Link from 'next/link';
+import { JobsDashboard } from '~/components/jobs-dashboard';
 
 export default function JobsPage() {
   return (

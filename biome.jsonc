@@ -26,7 +26,8 @@
         "noAsyncPromiseExecutor": "off",
         "noExplicitAny": "off",
         "noArrayIndexKey": "off",
-        "noImplicitAnyLet": "off"
+        "noImplicitAnyLet": "off",
+        "noUnknownAtRules": "off"
       },
       "a11y": {
         "useAltText": "off",
@@ -34,11 +35,16 @@
         "useIframeTitle": "off",
         "noLabelWithoutControl": "off",
         "noStaticElementInteractions": "off",
+        "noSvgWithoutTitle": "off",
         "useKeyWithClickEvents": "off",
+        "useMediaCaption": "off",
         "useValidAnchor": "off"
       },
       "complexity": {
         "noStaticOnlyClass": "off"
+      },
+      "performance": {
+        "noImgElement": "off"
       }
     }
   },

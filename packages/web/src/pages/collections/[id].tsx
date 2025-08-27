@@ -1,24 +1,25 @@
-import Head from "next/head";
-import Link from "next/link";
-import { useRouter } from "next/router";
-import { api } from "~/utils/api";
+import Head from 'next/head';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { api } from '~/utils/api';
 
 export default function CollectionPage() {
   const router = useRouter();
   const { id } = router.query;
-  
-  const { data: collection, isLoading, error } = api.collections.getCollectionById.useQuery(
-    { id: id as string },
-    { enabled: !!id }
-  );
+
+  const {
+    data: collection,
+    isLoading,
+    error,
+  } = api.collections.getCollectionById.useQuery({ id: id as string }, { enabled: !!id });
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     }).format(new Date(date));
   };
 
@@ -75,15 +76,12 @@ export default function CollectionPage() {
         <meta name="description" content={`View posts from ${collection.name} collection by @${collection.user}`} />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      
+
       <main className="min-h-screen bg-gradient-to-b from-[#2e026d] to-[#15162c]">
         <div className="container mx-auto px-4 py-16">
           {/* Header */}
           <div className="mb-8">
-            <Link
-              href="/"
-              className="inline-flex items-center text-gray-400 hover:text-white transition-colors mb-6"
-            >
+            <Link href="/" className="inline-flex items-center text-gray-400 hover:text-white transition-colors mb-6">
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
@@ -128,9 +126,7 @@ export default function CollectionPage() {
 
             <div className="mt-4 text-sm text-gray-400">
               <p>Created: {formatDate(collection.createdAt)}</p>
-              {collection.updatedAt && (
-                <p>Updated: {formatDate(collection.updatedAt)}</p>
-              )}
+              {collection.updatedAt && <p>Updated: {formatDate(collection.updatedAt)}</p>}
             </div>
           </div>
 
@@ -144,10 +140,8 @@ export default function CollectionPage() {
             </div>
           ) : (
             <div>
-              <h2 className="text-2xl font-bold text-white mb-6">
-                Posts ({collection.posts.length})
-              </h2>
-              
+              <h2 className="text-2xl font-bold text-white mb-6">Posts ({collection.posts.length})</h2>
+
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {collection.posts.map((post) => (
                   <div
@@ -176,11 +170,15 @@ export default function CollectionPage() {
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-500">
                           <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                            <path
+                              fillRule="evenodd"
+                              d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                              clipRule="evenodd"
+                            />
                           </svg>
                         </div>
                       )}
-                      
+
                       {/* Video indicator */}
                       {post.videoUrl && (
                         <div className="absolute top-3 right-3 bg-black/60 rounded-full p-1">
@@ -199,17 +197,13 @@ export default function CollectionPage() {
                           <div className="w-6 h-6 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
                             {post.profile.username?.charAt(0).toUpperCase()}
                           </div>
-                          <span className="text-sm text-gray-300 font-medium">
-                            @{post.profile.username}
-                          </span>
+                          <span className="text-sm text-gray-300 font-medium">@{post.profile.username}</span>
                         </div>
                       )}
 
                       {/* Description */}
                       {post.description && (
-                        <p className="text-sm text-gray-400 mb-3 line-clamp-3">
-                          {post.description}
-                        </p>
+                        <p className="text-sm text-gray-400 mb-3 line-clamp-3">{post.description}</p>
                       )}
 
                       {/* Post Details */}

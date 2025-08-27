@@ -1,7 +1,7 @@
-import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { collections, posts } from "~/server/db/schema";
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
+import { createTRPCRouter, publicProcedure } from '~/server/api/trpc';
+import { collections, posts } from '~/server/db/schema';
 
 const postSchema = z.object({
   id: z.string().min(1),
@@ -19,74 +19,72 @@ const collectionSchema = z.object({
 const savedCollectionsSchema = z.array(collectionSchema);
 
 export const collectionsRouter = createTRPCRouter({
-  importSavedCollections: publicProcedure
-    .input(savedCollectionsSchema)
-    .mutation(async ({ ctx, input }) => {
-      const results = [];
-      
-      for (const collection of input) {
-        try {
-          // Insert or update collection
-          await ctx.db
-            .insert(collections)
-            .values({
-              id: collection.id,
+  importSavedCollections: publicProcedure.input(savedCollectionsSchema).mutation(async ({ ctx, input }) => {
+    const results = [];
+
+    for (const collection of input) {
+      try {
+        // Insert or update collection
+        await ctx.db
+          .insert(collections)
+          .values({
+            id: collection.id,
+            user: collection.user,
+            name: collection.name,
+            url: collection.url,
+          })
+          .onConflictDoUpdate({
+            target: collections.id,
+            set: {
               user: collection.user,
               name: collection.name,
               url: collection.url,
-            })
-            .onConflictDoUpdate({
-              target: collections.id,
-              set: {
-                user: collection.user,
-                name: collection.name,
-                url: collection.url,
-                updatedAt: new Date(),
-              },
-            });
+              updatedAt: new Date(),
+            },
+          });
 
-          // Insert posts for this collection
-          const postsToInsert = collection.posts.map((post) => ({
-            id: post.id,
-            url: post.url,
-            collectionId: collection.id,
-          }));
+        // Insert posts for this collection
+        const postsToInsert = collection.posts.map((post) => ({
+          id: post.id,
+          url: post.url,
+          collectionId: collection.id,
+        }));
 
-          if (postsToInsert.length > 0) {
-            for (const post of postsToInsert) {
-              await ctx.db
-                .insert(posts)
-                .values(post)
-                .onConflictDoUpdate({
-                  target: posts.id,
-                  set: {
-                    url: post.url,
-                    collectionId: post.collectionId,
-                    updatedAt: new Date(),
-                  },
-                });
-            }
+        if (postsToInsert.length > 0) {
+          for (const post of postsToInsert) {
+            await ctx.db
+              .insert(posts)
+              .values(post)
+              .onConflictDoUpdate({
+                target: posts.id,
+                set: {
+                  url: post.url,
+                  collectionId: post.collectionId,
+                  updatedAt: new Date(),
+                },
+              });
           }
-
-          results.push({
-            collectionId: collection.id,
-            postsImported: collection.posts.length,
-            success: true,
-          });
-        } catch (error) {
-          results.push({
-            collectionId: collection.id,
-            error: error instanceof Error ? error.message : "Unknown error",
-            success: false,
-          });
         }
-      }
 
-      return {
-        collectionsProcessed: input.length,
-        results,
-      };
-    }),
+        results.push({
+          collectionId: collection.id,
+          postsImported: collection.posts.length,
+          success: true,
+        });
+      } catch (error) {
+        results.push({
+          collectionId: collection.id,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          success: false,
+        });
+      }
+    }
+
+    return {
+      collectionsProcessed: input.length,
+      results,
+    };
+  }),
 
   getAllCollections: publicProcedure.query(async ({ ctx }) => {
     const allCollections = await ctx.db.query.collections.findMany({
@@ -104,40 +102,36 @@ export const collectionsRouter = createTRPCRouter({
     return allCollections;
   }),
 
-  getCollectionById: publicProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const collection = await ctx.db.query.collections.findFirst({
-        where: eq(collections.id, input.id),
-        with: {
-          posts: {
-            orderBy: (posts, { desc }) => [desc(posts.createdAt)],
-            with: {
-              profile: true,
-            },
+  getCollectionById: publicProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+    const collection = await ctx.db.query.collections.findFirst({
+      where: eq(collections.id, input.id),
+      with: {
+        posts: {
+          orderBy: (posts, { desc }) => [desc(posts.createdAt)],
+          with: {
+            profile: true,
           },
         },
-      });
+      },
+    });
 
-      return collection;
-    }),
+    return collection;
+  }),
 
-  getCollectionsByUser: publicProcedure
-    .input(z.object({ user: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const userCollections = await ctx.db.query.collections.findMany({
-        where: eq(collections.user, input.user),
-        orderBy: (collections, { desc }) => [desc(collections.updatedAt)],
-        with: {
-          posts: {
-            orderBy: (posts, { desc }) => [desc(posts.createdAt)],
-            with: {
-              profile: true,
-            },
+  getCollectionsByUser: publicProcedure.input(z.object({ user: z.string() })).query(async ({ ctx, input }) => {
+    const userCollections = await ctx.db.query.collections.findMany({
+      where: eq(collections.user, input.user),
+      orderBy: (collections, { desc }) => [desc(collections.updatedAt)],
+      with: {
+        posts: {
+          orderBy: (posts, { desc }) => [desc(posts.createdAt)],
+          with: {
+            profile: true,
           },
         },
-      });
+      },
+    });
 
-      return userCollections;
-    }),
+    return userCollections;
+  }),
 });

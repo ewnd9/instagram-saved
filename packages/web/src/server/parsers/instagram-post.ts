@@ -25,7 +25,7 @@ export async function parseInstagramPost({ postId }: { postId: string }): Promis
   });
 
   // const { inspect } = await import("node:util");
-  // console.log(inspect(data, { showHidden: false, depth: null }));
+  // console.log(inspect({ postId, data }, { showHidden: false, depth: null }));
   // console.log(data);
   // (await import("fs")).writeFileSync(
   //   "data.json",

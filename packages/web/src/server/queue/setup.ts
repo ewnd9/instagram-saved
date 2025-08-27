@@ -1,7 +1,4 @@
-import postgres from 'postgres';
-import { env } from '~/env';
-
-const conn = postgres(env.DATABASE_URL);
+import { conn } from '~/server/db';
 
 export async function setupDatabase() {
   try {

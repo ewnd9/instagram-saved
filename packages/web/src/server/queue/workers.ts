@@ -1,27 +1,42 @@
-import { handleParseInstagramPost } from './handlers/parse-instagram-post';
-import { getBoss } from './index';
+import { singleton } from 'tsyringe';
+import { ParseInstagramPostHandler } from './handlers/parse-instagram-post';
+import { QueueService } from './index';
 import { JOB_TYPES } from './jobs';
 
-export async function startWorkers(): Promise<void> {
-  const boss = await getBoss();
+@singleton()
+export class WorkersService {
+  private workersStarted = false;
 
-  // Prevent multiple worker registrations
-  if (process.env.WORKERS_STARTED === 'true') {
-    console.log('Workers already started, skipping...');
-    return;
+  constructor(
+    private queueService: QueueService,
+    private parseInstagramPostHandler: ParseInstagramPostHandler,
+  ) {}
+
+  async startWorkers(): Promise<void> {
+    const boss = await this.queueService.getBoss();
+
+    // Prevent multiple worker registrations
+    if (this.workersStarted) {
+      console.log('Workers already started, skipping...');
+      return;
+    }
+
+    this.workersStarted = true;
+
+    // Parse Instagram post worker
+    await boss.createQueue(JOB_TYPES.PARSE_INSTAGRAM_POST);
+    await boss.work(
+      JOB_TYPES.PARSE_INSTAGRAM_POST,
+      this.parseInstagramPostHandler.handle.bind(this.parseInstagramPostHandler),
+    );
+
+    console.log('Instagram post parser worker started successfully');
   }
 
-  process.env.WORKERS_STARTED = 'true';
-
-  // Parse Instagram post worker
-  await boss.createQueue(JOB_TYPES.PARSE_INSTAGRAM_POST);
-  await boss.work(JOB_TYPES.PARSE_INSTAGRAM_POST, handleParseInstagramPost);
-
-  console.log('Instagram post parser worker started successfully');
-}
-
-export async function stopWorkers(): Promise<void> {
-  const boss = await getBoss();
-  await boss.stop();
-  console.log('All queue workers stopped');
+  async stopWorkers(): Promise<void> {
+    const boss = await this.queueService.getBoss();
+    await boss.stop();
+    this.workersStarted = false;
+    console.log('All queue workers stopped');
+  }
 }

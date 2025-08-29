@@ -17,6 +17,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `axios` for web requests
 - `zod` to validate data
+- `tsyringe` for dependency injection
+  - never use "@inject" decorator as we only use classes
 
 ## Conventions
 

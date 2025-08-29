@@ -1,7 +1,7 @@
 import type PgBoss from 'pg-boss';
 import { singleton } from 'tsyringe';
 import { conn } from '~/server/db';
-import { getBoss } from '~/server/queue';
+import { QueueService } from '~/server/queue';
 
 interface DbJob {
   id: string;
@@ -36,8 +36,10 @@ interface ActiveDbJob {
 
 @singleton()
 export class JobsService {
+  constructor(private readonly queueService: QueueService) {}
+
   async getStats() {
-    const boss = await getBoss();
+    const boss = await this.queueService.getBoss();
     const stats = await (boss as any).countStates();
 
     const byState = Object.entries(stats)
@@ -158,19 +160,19 @@ export class JobsService {
   }
 
   async cancelJob(id: string, name: string) {
-    const boss = await getBoss();
+    const boss = await this.queueService.getBoss();
     await boss.cancel(name, id);
     return { success: true };
   }
 
   async retryJob(id: string, name: string) {
-    const boss = await getBoss();
+    const boss = await this.queueService.getBoss();
     await boss.retry(name, id);
     return { success: true };
   }
 
   async getQueues() {
-    const boss = await getBoss();
+    const boss = await this.queueService.getBoss();
     const queues = await boss.getQueues();
 
     return queues.map((queue: PgBoss.QueueResult) => ({

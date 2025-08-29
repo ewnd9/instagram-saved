@@ -1,5 +1,6 @@
 import type { JobOptions } from 'pg-boss';
-import { getBoss } from './index';
+import { singleton } from 'tsyringe';
+import { QueueService } from './index';
 
 export const JOB_TYPES = {
   PARSE_INSTAGRAM_POST: 'parse-instagram-post',
@@ -13,34 +14,30 @@ export interface ParseInstagramPostPayload {
   postId?: string;
 }
 
-export async function addJob<T extends object>(
-  jobType: JobType,
-  payload: T,
-  options?: JobOptions,
-): Promise<string | null> {
-  const boss = await getBoss();
-  const jobId = await boss.send(jobType, payload, {
-    retryLimit: 3,
-    retryDelay: 5000,
-    ...options,
-  });
+@singleton()
+export class JobsService {
+  constructor(private queueService: QueueService) {}
 
-  console.log(`Added job ${jobType} with ID: ${jobId}`);
-  return jobId;
-}
+  async addJob<T extends object>(jobType: JobType, payload: T, options?: JobOptions): Promise<string | null> {
+    const boss = await this.queueService.getBoss();
+    const jobId = await boss.send(jobType, payload, {
+      retryLimit: 3,
+      retryDelay: 5000,
+      ...options,
+    });
 
-export async function scheduleRecurringJob(
-  jobType: JobType,
-  cron: string,
-  payload?: object,
-  options?: JobOptions,
-): Promise<void> {
-  const boss = await getBoss();
+    console.log(`Added job ${jobType} with ID: ${jobId}`);
+    return jobId;
+  }
 
-  await boss.schedule(jobType, cron, payload, {
-    retryLimit: 2,
-    ...options,
-  });
+  async scheduleRecurringJob(jobType: JobType, cron: string, payload?: object, options?: JobOptions): Promise<void> {
+    const boss = await this.queueService.getBoss();
 
-  console.log(`Scheduled recurring job ${jobType} with cron: ${cron}`);
+    await boss.schedule(jobType, cron, payload, {
+      retryLimit: 2,
+      ...options,
+    });
+
+    console.log(`Scheduled recurring job ${jobType} with cron: ${cron}`);
+  }
 }

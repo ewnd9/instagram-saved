@@ -1,43 +1,43 @@
 import PgBoss from 'pg-boss';
+import { singleton } from 'tsyringe';
 import { env } from '~/env';
-import { setupDatabase } from './setup';
+import { QueueSetupService } from './setup';
 
-/**
- * Cache the database connection in development. This avoids creating a new connection on every HMR
- * update.
- */
-const globalForPgBoss = globalThis as unknown as {
-  bossInstance: PgBoss | null;
-};
+@singleton()
+export class QueueService {
+  private bossInstance: PgBoss | null = null;
 
-export async function getBoss(): Promise<PgBoss> {
-  if (!globalForPgBoss.bossInstance) {
-    console.log(`initializing pg boss ${Date.now()}`);
+  constructor(private setupService: QueueSetupService) {}
 
-    // Setup database extensions first
-    await setupDatabase();
+  async getBoss(): Promise<PgBoss> {
+    if (!this.bossInstance) {
+      console.log(`initializing pg boss ${Date.now()}`);
 
-    globalForPgBoss.bossInstance = new PgBoss({
-      connectionString: env.DATABASE_URL,
-      schema: 'pgboss',
-    });
+      // Setup database extensions first
+      await this.setupService.setupDatabase();
 
-    globalForPgBoss.bossInstance.on('error', (error) => {
-      console.error('PgBoss error:', error);
-    });
+      this.bossInstance = new PgBoss({
+        connectionString: env.DATABASE_URL,
+        schema: 'pgboss',
+      });
 
-    await globalForPgBoss.bossInstance.start();
-    console.log('PgBoss started successfully');
+      this.bossInstance.on('error', (error) => {
+        console.error('PgBoss error:', error);
+      });
+
+      await this.bossInstance.start();
+      console.log('PgBoss started successfully');
+    }
+
+    return this.bossInstance;
   }
 
-  return globalForPgBoss.bossInstance;
-}
-
-export async function closeBoss(): Promise<void> {
-  if (globalForPgBoss.bossInstance) {
-    await globalForPgBoss.bossInstance.stop();
-    globalForPgBoss.bossInstance = null;
-    console.log('PgBoss stopped');
+  async closeBoss(): Promise<void> {
+    if (this.bossInstance) {
+      await this.bossInstance.stop();
+      this.bossInstance = null;
+      console.log('PgBoss stopped');
+    }
   }
 }
 

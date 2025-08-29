@@ -5,8 +5,9 @@ import addFormats from 'ajv-formats';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '~/server/db';
 import { collections, posts } from '~/server/db/schema';
+import { container } from '~/server/di/container';
 import type { ParseInstagramPostPayload } from '~/server/queue/jobs';
-import { addJob, JOB_TYPES } from '~/server/queue/jobs';
+import { JOB_TYPES, JobsService } from '~/server/queue/jobs';
 
 const ajv = new Ajv();
 addFormats(ajv);
@@ -116,7 +117,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 postId: post.id,
               };
 
-              await addJob(JOB_TYPES.PARSE_INSTAGRAM_POST, jobPayload);
+              const jobsService = container.resolve(JobsService);
+              await jobsService.addJob(JOB_TYPES.PARSE_INSTAGRAM_POST, jobPayload);
 
               jobsQueued++;
             } catch (jobError) {

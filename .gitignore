@@ -18,7 +18,8 @@ dist
 .env
 
 # CLI output
-saved.json
+saved*.json
+!saved.schema.json
 
 # Browser session data
 browser-session/

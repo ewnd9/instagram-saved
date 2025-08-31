@@ -1,5 +1,6 @@
 import { singleton } from 'tsyringe';
 import { ParseInstagramPostHandler } from './handlers/parse-instagram-post';
+import { UploadInstagramPostHandler } from './handlers/upload-instagram-post';
 import { QueueService } from './index';
 import { JOB_TYPES } from './jobs';
 
@@ -10,6 +11,7 @@ export class WorkersService {
   constructor(
     private queueService: QueueService,
     private parseInstagramPostHandler: ParseInstagramPostHandler,
+    private uploadInstagramPostHandler: UploadInstagramPostHandler,
   ) {}
 
   async startWorkers(): Promise<void> {
@@ -28,6 +30,12 @@ export class WorkersService {
     await boss.work(
       JOB_TYPES.PARSE_INSTAGRAM_POST,
       this.parseInstagramPostHandler.handle.bind(this.parseInstagramPostHandler),
+    );
+
+    await boss.createQueue(JOB_TYPES.UPLOAD_INSTAGRAM_POST);
+    await boss.work(
+      JOB_TYPES.UPLOAD_INSTAGRAM_POST,
+      this.uploadInstagramPostHandler.handle.bind(this.uploadInstagramPostHandler),
     );
 
     console.log('Instagram post parser worker started successfully');

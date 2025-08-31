@@ -4,11 +4,18 @@ import { QueueService } from './index';
 
 export const JOB_TYPES = {
   PARSE_INSTAGRAM_POST: 'parse-instagram-post',
+  UPLOAD_INSTAGRAM_POST: 'upload-instagram-post',
 } as const;
 
 export type JobType = (typeof JOB_TYPES)[keyof typeof JOB_TYPES];
 
 export interface ParseInstagramPostPayload {
+  url: string;
+  collectionId: string;
+  postId?: string;
+}
+
+export interface UploadInstagramPostPayload {
   url: string;
   collectionId: string;
   postId?: string;

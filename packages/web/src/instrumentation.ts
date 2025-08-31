@@ -1,9 +1,9 @@
 import 'reflect-metadata';
-import { WorkersService } from '~/server/queue/workers';
-import { container } from './server/di/container';
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
+    const { container } = await import('./server/di/container');
+    const { WorkersService } = await import('./server/queue/workers');
     const workersService = container.resolve(WorkersService);
 
     try {

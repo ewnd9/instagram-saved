@@ -150,19 +150,26 @@ export default function CollectionPage() {
                   >
                     {/* Media Content */}
                     <div className="relative aspect-square bg-gray-800">
-                      {post.videoUrl ? (
+                      {post.s3VideoUrl ? (
                         <video
                           className="w-full h-full object-cover"
-                          poster={post.thumbnailSrc || post.displayUrl || undefined}
+                          poster={
+                            `${process.env.NEXT_PUBLIC_AWS_BUCKET_PROXY_URL}/${post.s3ThumbnailSrc}` ||
+                            `${process.env.NEXT_PUBLIC_AWS_BUCKET_PROXY_URL}/${post.s3DisplayUrl}` ||
+                            undefined
+                          }
                           controls
                           preload="metadata"
                         >
-                          <source src={post.videoUrl} type="video/mp4" />
+                          <source
+                            src={`${process.env.NEXT_PUBLIC_AWS_BUCKET_PROXY_URL}/${post.s3VideoUrl}`}
+                            type="video/mp4"
+                          />
                           Your browser does not support the video tag.
                         </video>
-                      ) : post.displayUrl ? (
+                      ) : post.s3DisplayUrl ? (
                         <img
-                          src={post.displayUrl}
+                          src={`${process.env.NEXT_PUBLIC_AWS_BUCKET_PROXY_URL}/${post.s3DisplayUrl}`}
                           alt="Instagram post"
                           className="w-full h-full object-cover"
                           loading="lazy"
@@ -180,7 +187,7 @@ export default function CollectionPage() {
                       )}
 
                       {/* Video indicator */}
-                      {post.videoUrl && (
+                      {post.s3VideoUrl && (
                         <div className="absolute top-3 right-3 bg-black/60 rounded-full p-1">
                           <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M2 6a2 2 0 012-2h6l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />

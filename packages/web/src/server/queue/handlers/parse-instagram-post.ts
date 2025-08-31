@@ -4,11 +4,14 @@ import { injectable } from 'tsyringe';
 import { posts, profiles } from '~/server/db/schema';
 import { DatabaseService } from '~/server/features/database/database-service';
 import { parseInstagramPost } from '~/server/parsers/instagram-post';
-import type { ParseInstagramPostPayload } from '../jobs';
+import { JOB_TYPES, JobsService, type ParseInstagramPostPayload, type UploadInstagramPostPayload } from '../jobs';
 
 @injectable()
 export class ParseInstagramPostHandler {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly jobsService: JobsService,
+  ) {}
 
   private extractPostIdFromUrl(url: string): string {
     const match = url.match(/\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/);
@@ -18,14 +21,14 @@ export class ParseInstagramPostHandler {
     return match[1];
   }
 
-  async handle(jobs: Job[]): Promise<void> {
+  async handle(jobs: Job<ParseInstagramPostPayload>[]): Promise<void> {
     const db = this.databaseService.db;
 
     for (const job of jobs) {
       console.log(`Parsing Instagram post job: ${job.id}`);
 
       try {
-        const { url, collectionId, postId } = job.data as ParseInstagramPostPayload;
+        const { url, collectionId, postId } = job.data;
 
         console.log(`Parsing Instagram post: ${url} for collection ${collectionId}`);
 
@@ -87,6 +90,14 @@ export class ParseInstagramPostHandler {
         }
 
         console.log(`Successfully parsed and updated post ${url}`);
+
+        const jobPayload: UploadInstagramPostPayload = {
+          url: job.data.url,
+          collectionId: job.data.collectionId,
+          postId: job.data.postId,
+        };
+
+        await this.jobsService.addJob(JOB_TYPES.UPLOAD_INSTAGRAM_POST, jobPayload);
       } catch (error) {
         console.error(`Failed to parse Instagram post job ${job.id}:`, error);
         throw error; // This will cause the job to retry

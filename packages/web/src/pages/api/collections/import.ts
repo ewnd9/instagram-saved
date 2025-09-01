@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   try {
     // Load and compile the JSON schema
-    const schemaPath = path.join(process.cwd(), '..', 'cli', 'saved.schema.json');
+    const schemaPath = path.join(process.cwd(), '..', 'shared', 'saved.schema.json');
     const schemaContent = fs.readFileSync(schemaPath, 'utf-8');
     const schema = JSON.parse(schemaContent);
     const validate = ajv.compile(schema);

@@ -21,6 +21,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@internal/shared": "workspace:*",
     "@playwright/test": "1.55.0",
     "@types/node-fetch": "2",
     "dotenv": "^17.2.1",

@@ -12,6 +12,7 @@
     "cli:upload": "yarn workspace @instagram-scraper/cli build && yarn workspace @instagram-scraper/cli start upload",
     "cli:scrape": "yarn workspace @instagram-scraper/cli build && HEADLESS=false yarn workspace @instagram-scraper/cli start",
     "lint": "biome check ./ --write",
+    "typecheck": "turbo typecheck",
     "prepare": "husky"
   },
   "license": "MIT",

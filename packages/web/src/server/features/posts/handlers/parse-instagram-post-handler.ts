@@ -1,10 +1,15 @@
 import { eq } from 'drizzle-orm';
 import type { Job } from 'pg-boss';
 import { injectable } from 'tsyringe';
+import { parseInstagramPost } from '~/server/clients/instagram-api';
+import { DatabaseService } from '~/server/db/database-service';
 import { posts, profiles } from '~/server/db/schema';
-import { DatabaseService } from '~/server/features/database/database-service';
-import { parseInstagramPost } from '~/server/parsers/instagram-post';
-import { JOB_TYPES, JobsService, type ParseInstagramPostPayload, type UploadInstagramPostPayload } from '../jobs';
+import {
+  JOB_TYPES,
+  JobsService,
+  type ParseInstagramPostPayload,
+  type UploadInstagramPostPayload,
+} from '~/server/queue/jobs';
 
 @injectable()
 export class ParseInstagramPostHandler {
@@ -80,9 +85,6 @@ export class ParseInstagramPostHandler {
               profileId: profileDbId,
               shortcode,
               description: instagramData.description,
-              videoUrl: instagramData.videoUrl,
-              thumbnailSrc: instagramData.thumbnailSrc,
-              displayUrl: instagramData.displayUrl,
               parsedAt: new Date(),
               updatedAt: new Date(),
             })

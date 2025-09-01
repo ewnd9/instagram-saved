@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe';
-import { ParseInstagramPostHandler } from './handlers/parse-instagram-post';
-import { UploadInstagramPostHandler } from './handlers/upload-instagram-post';
+import { ParseInstagramPostHandler } from '~/server/features/posts/handlers/parse-instagram-post-handler';
+import { UploadInstagramPostHandler } from '~/server/features/posts/handlers/upload-instagram-post-handler';
 import { QueueService } from './index';
 import { JOB_TYPES } from './jobs';
 

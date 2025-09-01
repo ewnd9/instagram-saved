@@ -1,7 +1,7 @@
 import { desc } from 'drizzle-orm';
 import { singleton } from 'tsyringe';
 import { posts } from '~/server/db/schema';
-import { DatabaseService } from '../database/database-service';
+import { DatabaseService } from '../../db/database-service';
 
 @singleton()
 export class PostsService {

@@ -1,7 +1,7 @@
 import { desc, eq } from 'drizzle-orm';
 import { singleton } from 'tsyringe';
 import { collections, posts } from '~/server/db/schema';
-import { DatabaseService } from '../database/database-service';
+import { DatabaseService } from '../../db/database-service';
 
 export interface CollectionData {
   id: string;

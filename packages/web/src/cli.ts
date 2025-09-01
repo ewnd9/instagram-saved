@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { createCaller } from './server/api/root';
 import { createInnerTRPCContext } from './server/api/trpc';
-import { DatabaseService } from './server/features/database/database-service';
+import { DatabaseService } from './server/db/database-service';
 
 const trpc = createCaller(createInnerTRPCContext({}));
 const collections = await trpc.collections.getAllCollections();

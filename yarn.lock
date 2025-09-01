@@ -5717,7 +5717,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"socks-proxy-agent@npm:^8.0.3":
+"socks-proxy-agent@npm:^8.0.3, socks-proxy-agent@npm:^8.0.5":
   version: 8.0.5
   resolution: "socks-proxy-agent@npm:8.0.5"
   dependencies:
@@ -6146,6 +6146,7 @@ __metadata:
     react: "npm:^19.0.0"
     react-dom: "npm:^19.0.0"
     reflect-metadata: "npm:^0.2.2"
+    socks-proxy-agent: "npm:^8.0.5"
     superjson: "npm:^2.2.1"
     tailwindcss: "npm:^4.0.15"
     tsx: "npm:^4.19.0"

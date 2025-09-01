@@ -200,12 +200,8 @@
           "name": "web_post_collectionId_web_collection_id_fk",
           "tableFrom": "web_post",
           "tableTo": "web_collection",
-          "columnsFrom": [
-            "collectionId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["collectionId"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -213,12 +209,8 @@
           "name": "web_post_profileId_web_profile_id_fk",
           "tableFrom": "web_post",
           "tableTo": "web_profile",
-          "columnsFrom": [
-            "profileId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profileId"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -294,9 +286,7 @@
         "web_profile_username_unique": {
           "name": "web_profile_username_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "username"
-          ]
+          "columns": ["username"]
         }
       },
       "policies": {},

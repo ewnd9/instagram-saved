@@ -3,14 +3,17 @@ import axios from 'axios';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { env } from '../../env';
 
-const agent = new SocksProxyAgent(env.SOCKS5_PROXY);
+const agent = env.SOCKS5_PROXY ? new SocksProxyAgent(env.SOCKS5_PROXY) : null;
+const instagramClient = axios.create({
+  baseURL: 'https://www.instagram.com',
+  ...(agent ? { httpAgent: agent, httpsAgent: agent } : {}),
+});
 
 // https://github.com/Okramjimmy/Instagram-reels-downloader/blob/01e8fcb3a6288136d79bd1712bcf0151301603ae/src/services/instagram/requests.ts#L33
 export async function parseInstagramPost({ postId }: { postId: string }): Promise<any> {
   const encodedData = encodeGraphqlRequestData(postId);
 
-  const { data } = await axios.post('/api/graphql', encodedData, {
-    baseURL: 'https://www.instagram.com',
+  const { data } = await instagramClient.post('/api/graphql', encodedData, {
     headers: {
       Accept: '*/*',
       'Accept-Language': 'en-US,en;q=0.5',
@@ -26,17 +29,17 @@ export async function parseInstagramPost({ postId }: { postId: string }): Promis
       'User-Agent':
         'Mozilla/5.0 (Linux; Android 11; SAMSUNG SM-G973U) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/14.2 Chrome/87.0.4280.141 Mobile Safari/537.36',
     },
-    httpAgent: agent,
-    httpsAgent: agent,
+    timeout: 30000,
   });
 
-  // const { inspect } = await import("node:util");
+  if (data.errors?.[0]?.message) {
+    throw new Error(data.errors[0].message);
+  }
+
+  // const { inspect } = await import('node:util');
   // console.log(inspect({ postId, data }, { showHidden: false, depth: null }));
   // console.log(data);
-  // (await import("fs")).writeFileSync(
-  //   "data.json",
-  //   JSON.stringify(data, null, 2)
-  // );
+  // (await import('fs')).writeFileSync('data.json', JSON.stringify(data, null, 2));
 
   return {
     videoUrl: data.data.xdt_shortcode_media.video_url,

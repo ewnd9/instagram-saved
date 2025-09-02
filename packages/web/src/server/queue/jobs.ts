@@ -29,7 +29,7 @@ export class JobsService {
     const boss = await this.queueService.getBoss();
     const jobId = await boss.send(jobType, payload, {
       retryLimit: 3,
-      retryDelay: 5000,
+      retryDelay: 60, // seconds
       ...options,
     });
 

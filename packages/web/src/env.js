@@ -10,7 +10,7 @@ export const env = createEnv({
     AWS_BUCKET: z.string(),
     AWS_REGION: z.string(),
     AWS_ENDPOINT_URL: z.string().url(),
-    SOCKS5_PROXY: z.string(),
+    SOCKS5_PROXY: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_AWS_BUCKET_PROXY_URL: z.string().url(),

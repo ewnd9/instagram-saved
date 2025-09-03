@@ -20,15 +20,15 @@ export interface UploadOptions {
 
 export class SavedDataUploader {
   private webUrl: string;
-  private timeout: number;
+  // private timeout: number;
 
-  constructor(webUrl: string = 'http://localhost:3000', timeout: number = 30000) {
+  constructor(webUrl: string = 'http://localhost:3000' /*, timeout: number = 30000*/) {
     this.webUrl = webUrl.replace(/\/$/, ''); // Remove trailing slash
-    this.timeout = timeout;
+    // this.timeout = timeout;
   }
 
   async uploadSavedData(options: UploadOptions = {}): Promise<UploadResult> {
-    const { filePath = 'saved.json', timeout = this.timeout } = options;
+    const { filePath = 'saved.json' /*, timeout = this.timeout */ } = options;
 
     try {
       console.log('📤 Starting upload process...');
@@ -69,7 +69,7 @@ export class SavedDataUploader {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(jsonData),
-        timeout,
+        // timeout,
       });
 
       if (!response.ok) {
@@ -115,7 +115,7 @@ export class SavedDataUploader {
 
       const response = await fetch(`${this.webUrl}/api/health`, {
         method: 'GET',
-        timeout: 5000,
+        // timeout: 5000,
       });
 
       if (response.ok) {
@@ -131,5 +131,3 @@ export class SavedDataUploader {
     }
   }
 }
-
-export default SavedDataUploader;

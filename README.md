@@ -13,12 +13,20 @@ For ready to use docker image see [`ghcr.io/ewnd9/instagram-saved/web`](https://
 Create a `.env` file with your database and Instagram credentials:
 
 ```env
-# packages/cli/.env
+# packages/web/.env
+## for cli
 INSTAGRAM_USERNAME=your_username
 INSTAGRAM_PASSWORD=your_password
 WEB_API=https://path-to-deployed-web-image
-# packages/web/.env
+## for service
 DATABASE_URL=postgresql://username:password@localhost:5432/database
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_BUCKET=instagram-saved
+AWS_REGION=
+AWS_ENDPOINT_URL=
+NEXT_PUBLIC_AWS_BUCKET_PROXY_URL=
+SOCKS5_PROXY=
 ```
 
 ### Installation

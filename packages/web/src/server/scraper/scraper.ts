@@ -1,6 +1,87 @@
-import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import type { Page } from '@playwright/test';
+
+import { InstagramAuth } from './auth';
+import { env } from './scraper-env';
+
+interface ScrapeOptions {
+  getDetails?: boolean;
+  maxScrolls?: number;
+  outputFile?: string;
+}
+
+export class InstagramSavedPostsCLI {
+  private auth: InstagramAuth | null = null;
+  private scraper: InstagramScraper | null = null;
+
+  async initialize(): Promise<void> {
+    console.log('🚀 Initializing Instagram Saved Posts CLI...');
+
+    this.auth = new InstagramAuth(env.INSTAGRAM_USERNAME, env.INSTAGRAM_PASSWORD, env.HEADLESS);
+
+    await this.auth.initBrowser();
+    this.scraper = new InstagramScraper(this.auth.page!);
+
+    console.log('✅ Initialization complete');
+  }
+
+  async scrapeToFile(options: ScrapeOptions = {}): Promise<void> {
+    const { maxScrolls = 10, outputFile = 'saved.json' } = options;
+
+    try {
+      console.log('🔐 Logging in to Instagram...');
+      await this.auth!.login();
+
+      console.log('📂 Navigating to saved posts...');
+      await this.auth!.navigateToSavedPosts();
+
+      console.log('🔍 Scraping saved posts...');
+      const posts = await this.scraper!.scrapeAllSavedPosts(maxScrolls);
+
+      if (posts.length === 0) {
+        console.log('⚠️ No saved posts found');
+        return;
+      }
+
+      console.log(`💾 Saving ${posts.length} posts to ${outputFile}...`);
+
+      const outputPath = path.resolve(outputFile);
+      await fs.writeFile(outputPath, JSON.stringify(posts, null, 2));
+
+      console.log('\n✅ Scraping completed successfully!');
+      console.log(`📁 Posts saved to: ${outputPath}`);
+      console.log(`📊 Total posts scraped: ${posts.length}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('❌ Scraping failed:', errorMessage);
+      throw error;
+    }
+  }
+
+  async cleanup(): Promise<void> {
+    console.log('🧹 Cleaning up...');
+
+    if (this.auth) {
+      await this.auth.closeBrowser();
+    }
+
+    console.log('✅ Cleanup complete');
+  }
+
+  async run(options: ScrapeOptions = {}): Promise<void> {
+    try {
+      await this.initialize();
+      await this.scrapeToFile(options);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('💥 CLI failed:', errorMessage);
+      process.exit(1);
+    } finally {
+      await this.cleanup();
+    }
+  }
+}
 
 interface CollectionPost {
   id: string;
@@ -113,9 +194,9 @@ class InstagramScraper {
               const [, user, name, id] = collectionMatch;
 
               extractedCollections.push({
-                user,
-                name,
-                id,
+                user: user!,
+                name: name!,
+                id: id!,
                 url: collectionUrl,
               });
             }
@@ -133,7 +214,7 @@ class InstagramScraper {
       const collectionsWithPosts: SavedCollection[] = [];
 
       for (let i = 0; i < collections.length; i++) {
-        const collection = collections[i];
+        const collection = collections[i]!;
         console.log(`Crawling collection ${i + 1}/${collections.length}: ${collection.name}`);
 
         const posts = await this.extractPostsFromCollection(collection.url);
@@ -176,5 +257,3 @@ class InstagramScraper {
     }
   }
 }
-
-export default InstagramScraper;

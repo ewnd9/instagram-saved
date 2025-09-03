@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { type Browser, chromium, type Page } from '@playwright/test';
 
-class InstagramAuth {
+export class InstagramAuth {
   private username: string;
   private password: string;
   private headless: boolean;
@@ -18,6 +18,7 @@ class InstagramAuth {
   }
 
   async initBrowser(): Promise<void> {
+    console.log(this.sessionDir);
     // Ensure session directory exists
     if (!fs.existsSync(this.sessionDir)) {
       fs.mkdirSync(this.sessionDir, { recursive: true });
@@ -129,5 +130,3 @@ class InstagramAuth {
     }
   }
 }
-
-export default InstagramAuth;

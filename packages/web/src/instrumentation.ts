@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import './server/di/register-defaults';
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {

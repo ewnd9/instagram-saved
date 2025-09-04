@@ -11,7 +11,6 @@ import type { CreateNextContextOptions } from '@trpc/server/adapters/next';
 import superjson from 'superjson';
 import { ZodError } from 'zod';
 
-import { db } from '~/server/db';
 import { container } from '~/server/di/container';
 
 /**
@@ -36,7 +35,6 @@ type CreateContextOptions = Record<string, never>;
  */
 export const createInnerTRPCContext = (_opts: CreateContextOptions) => {
   return {
-    db,
     container,
   };
 };

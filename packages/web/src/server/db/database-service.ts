@@ -1,12 +1,10 @@
-import { singleton } from 'tsyringe';
-import { type Database, db } from '~/server/db';
+import { type Database } from '~/server/db';
 
-@singleton()
 export class DatabaseService implements Disposable {
   private readonly database: Database;
 
-  constructor() {
-    this.database = db;
+  constructor(database: Database) {
+    this.database = database;
   }
 
   async [Symbol.dispose](): Promise<void> {

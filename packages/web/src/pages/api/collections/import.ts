@@ -3,11 +3,11 @@ import path from 'node:path';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '~/server/db';
 import { collections, posts } from '~/server/db/schema';
 import { container } from '~/server/di/container';
 import type { ParseInstagramPostPayload } from '~/server/queue/jobs';
 import { JOB_TYPES, JobsService } from '~/server/queue/jobs';
+import { DatabaseService } from '../../../server/db/database-service';
 
 const ajv = new Ajv();
 addFormats(ajv);
@@ -64,11 +64,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     let jobsQueued = 0;
     const errors: string[] = [];
 
+    const databaseService = container.resolve(DatabaseService);
+
     // Process each collection
     for (const collection of collectionsData) {
       try {
         // Insert or update collection
-        await db
+        await databaseService.db
           .insert(collections)
           .values({
             id: collection.id,
@@ -91,7 +93,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         // Process posts for this collection
         for (const post of collection.posts) {
           try {
-            await db
+            await databaseService.db
               .insert(posts)
               .values({
                 id: post.id,

@@ -2,7 +2,6 @@ import 'reflect-metadata';
 import { container } from 'tsyringe';
 
 // Import classes to ensure decorators are processed
-import '~/server/db/database-service';
 import '~/server/s3/s3-service';
 import '~/server/features/collections/collections-service';
 import '~/server/features/jobs/jobs-service';

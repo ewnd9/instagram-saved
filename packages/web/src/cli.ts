@@ -1,12 +1,15 @@
 import 'reflect-metadata';
 
 import { container } from 'tsyringe';
+import './server/di/register-defaults';
 import { createCaller } from './server/api/root';
 import { createInnerTRPCContext } from './server/api/trpc';
 import { DatabaseService } from './server/db/database-service';
 import { InstagramSavedPostsCLI } from './server/scraper/scraper';
 import { env } from './server/scraper/scraper-env';
 import { SavedDataUploader } from './server/scraper/uploader';
+
+const databaseService = container.resolve(DatabaseService);
 
 main()
   .catch((error) => {
@@ -15,7 +18,6 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    const databaseService = container.resolve(DatabaseService);
     // @TODO: debug why not working
     await container.dispose();
     await databaseService.db.$client.end();

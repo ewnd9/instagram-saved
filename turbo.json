@@ -9,6 +9,14 @@
       "dependsOn": [],
       "outputs": []
     },
+    "test": {
+      "dependsOn": [],
+      "outputs": ["coverage/**"]
+    },
+    "test:watch": {
+      "cache": false,
+      "persistent": true
+    },
     "containerize": {
       "dependsOn": ["build", "^containerize"],
       "outputs": []
